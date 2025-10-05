@@ -232,23 +232,7 @@ export default function LoginPage() {
                   <p className="mt-1 text-xs text-red-600">Por favor verifica tu contraseña</p>
                 )}
               </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <input
-                    id="remember"
-                    type="checkbox"
-                    className="h-4 w-4 text-[#6596d8] focus:ring-[#6596d8] border-gray-300 rounded"
-                  />
-                  <label htmlFor="remember" className="ml-2 block text-sm text-gray-700">
-                    Recordarme
-                  </label>
-                </div>
-                <a href="#" className="text-sm text-[#2e75d4] hover:text-[#8ddee1] font-medium transition-colors">
-                  ¿Olvidaste tu contraseña?
-                </a>
-              </div>
-
+              
               {error && (
                 <div className="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded flex items-start">
                   <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />

@@ -506,20 +506,22 @@ export default function GestionPacientesPage() {
             Registrar Nuevo Paciente
           </button>
 
-          <div className="flex-1 max-w-md">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Buscar por DNI, nombre o apellido..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none 
-                           focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all duration-200"
-              />
-            </div>
+        {/* Filtros y buscador */}
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          {/* Buscador */}
+          <div className="relative w-full sm:w-83">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Buscar por DNI, nombre o apellido..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg 
+                        focus:outline-none focus:ring-2 focus:ring-[#6596d8] focus:border-transparent 
+                        transition-all duration-200"
+            />
           </div>
-        </div>
+      </div>
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="flex items-center gap-3">
@@ -564,7 +566,7 @@ export default function GestionPacientesPage() {
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
         {loadingPacientes ? (
           <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-400"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6596d8]"></div>
           </div>
         ) : pacientesPaginados.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-gray-500">
@@ -580,7 +582,7 @@ export default function GestionPacientesPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gradient-to-r from-orange-50 to-yellow-50 border-b border-orange-200">
+              <thead className="bg-gradient-to-r from-orange-50 to-yellow-50 border-b border-[#6596d8]/20">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Documento</th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Apellido</th>
@@ -683,7 +685,7 @@ export default function GestionPacientesPage() {
           <div className="bg-white rounded-2xl p-6 w-full max-w-3xl shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                <div className="p-2 bg-gradient-to-br from-orange-400 to-yellow-400 rounded-lg">
+                <div className="p-2 bg-gradient-to-br from-[#6596d8]/5 to-[#b5e4e6]/5 rounded-lg">
                   <UserPlus className="w-6 h-6 text-white" />
                 </div>
                 Registrar Nuevo Paciente
@@ -696,7 +698,7 @@ export default function GestionPacientesPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                  <User className="w-5 h-5 text-orange-400" />
+                  <User className="w-5 h-5 text-[#6596d8]" />
                   Datos Personales
                 </h3>
 
@@ -732,7 +734,7 @@ export default function GestionPacientesPage() {
                     </label>
                     <input
                       className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 
-                                  focus:ring-orange-400 focus:border-transparent transition-all duration-200
+                                  focus:ring-[#6596d8] focus:border-transparent transition-all duration-200
                                   ${dobError ? 'border-red-500' : 'border-gray-300'}`}
                       placeholder="DD/MM/AAAA"
                       inputMode="numeric"
@@ -844,7 +846,7 @@ export default function GestionPacientesPage() {
 
               <div>
                 <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                  <Phone className="w-5 h-5 text-orange-400" />
+                  <Phone className="w-5 h-5 text-[#6596d8]" />
                   Información de Contacto
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -901,14 +903,15 @@ export default function GestionPacientesPage() {
 
               <div>
                 <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-orange-400" />
-                  Cobertura Médica
+                  <Shield className="w-5 h-5 text-[#6596d8]" />
+                  Cobertura Médica 
                 </h3>
                 <div>
                   <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">Obra Social</label>
                   <select
+                    required
                     className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 
-                               focus:ring-orange-400 focus:border-transparent transition-all duration-200
+                               focus:ring-[#6596d8] focus:border-transparent transition-all duration-200
                                appearance-none bg-white"
                     value={form.obra_social_id ?? ''}
                     onChange={handleObraSocialChange}
@@ -947,8 +950,8 @@ export default function GestionPacientesPage() {
                 <button
                   type="submit"
                   disabled={isLoading || (!!dobRaw && !!dobError)}
-                  className="flex-1 px-4 py-3 bg-gradient-to-r from-orange-400 to-yellow-400 text-white 
-                             rounded-lg hover:from-orange-500 hover:to-yellow-500 disabled:opacity-50 
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-[#6596d8] to-[#b5e4e6] text-white 
+                             rounded-lg hover:from-[#2e75d4] hover:to-[#8ddee1] disabled:opacity-50 
                              disabled:cursor-not-allowed font-semibold flex items-center justify-center gap-2 
                              transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
                 >

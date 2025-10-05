@@ -222,11 +222,11 @@ export default function AgendaDiariaPage() {
             <h1 className="text-3xl font-bold text-gray-800 mb-2">Agenda Diaria</h1>
             {userData ? (
               <p className="text-gray-600 flex items-center gap-2">
-                <User className="w-5 h-5 text-orange-400" />
+                <User className="w-5 h-5 text-[#6596d8]" />
                 {/* Si querés mostrar Apellido, Nombre lo podés partir, pero tu login trae nombre completo */}
                 <span className="font-semibold">{userData.nombre}</span>
                 {userData.rol && (
-                  <span className="text-sm bg-orange-100 text-orange-600 px-2 py-1 rounded-full ml-2">
+                  <span className="text-sm bg-[#6596d8]/10 text-[#6596d8] px-2 py-1 rounded-full ml-2">
                     {userData.rol}
                   </span>
                 )}
@@ -242,8 +242,8 @@ export default function AgendaDiariaPage() {
           </div>
           <button
             onClick={irAHoy}
-            className="px-4 py-2 bg-gradient-to-r from-orange-400 to-yellow-400 text-white rounded-lg 
-                     hover:from-orange-500 hover:to-yellow-500 shadow-md transform transition-all 
+            className="px-4 py-2 bg-gradient-to-r from-[#6596d8] to-[#b5e4e6] text-white rounded-lg 
+                     hover:from-[#2e75d4] hover:to-[#8ddee1] shadow-md transform transition-all 
                      duration-200 hover:scale-[1.02] active:scale-[0.98] font-semibold"
           >
             Ir a Hoy
@@ -268,7 +268,7 @@ export default function AgendaDiariaPage() {
                 {formatearFecha(fechaActual)}
               </h2>
               {fechaActual === new Date().toISOString().split("T")[0] && (
-                <span className="text-sm text-orange-500 font-medium">Hoy</span>
+                <span className="text-sm text-[#6596d8] font-medium">Hoy</span>
               )}
             </div>
 
@@ -285,14 +285,14 @@ export default function AgendaDiariaPage() {
         {/* Filtros + stats */}
         <div className="bg-white rounded-xl p-6 shadow-md mb-6 border border-gray-200">
           <div className="flex items-center gap-2 mb-4">
-            <Filter className="w-5 h-5 text-orange-400" />
+            <Filter className="w-5 h-5 text-[#6596d8]" />
             <h3 className="font-semibold text-gray-700">Filtros</h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-orange-400" />
+                <Calendar className="w-4 h-4 text-[#6596d8]" />
                 Fecha
               </label>
               <input
@@ -300,20 +300,20 @@ export default function AgendaDiariaPage() {
                 value={fechaActual}
                 onChange={(e) => setFechaActual(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 
-                         focus:ring-orange-400 focus:border-transparent transition-all duration-200"
+                         focus:ring-[#6596d8] focus:border-transparent transition-all duration-200"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <Clock className="w-4 h-4 text-orange-400" />
+                <Clock className="w-4 h-4 text-[#6596d8]" />
                 Horario
               </label>
               <select
                 value={filtroTurno}
                 onChange={(e) => setFiltroTurno(e.target.value as "todos" | "maniana" | "tarde")}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 
-                         focus:ring-orange-400 focus:border-transparent transition-all duration-200"
+                         focus:ring-[#6596d8] focus:border-transparent transition-all duration-200"
               >
                 <option value="todos">Todos los horarios</option>
                 <option value="maniana">Mañana (8:00 - 12:00)</option>
@@ -323,14 +323,15 @@ export default function AgendaDiariaPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-orange-400" />
+                <CheckCircle className="w-4 h-4 text-[#6596d8]
+" />
                 Estado
               </label>
               <select
                 value={filtroEstado}
                 onChange={(e) => setFiltroEstado(e.target.value as "todos" | "ocupados" | "libres")}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 
-                         focus:ring-orange-400 focus:border-transparent transition-all duration-200"
+                         focus:ring-[#6596d8] focus:border-transparent transition-all duration-200"
               >
                 <option value="todos">Todos los estados</option>
                 <option value="ocupados">Ocupados</option>
@@ -358,7 +359,7 @@ export default function AgendaDiariaPage() {
         {/* Lista de turnos */}
         <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
           <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-orange-400" />
+            <Clock className="w-5 h-5 text-[#6596d8]" />
             Turnos del día
           </h3>
 
@@ -369,7 +370,7 @@ export default function AgendaDiariaPage() {
           ) : isLoadingTurnos ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-400 mx-auto mb-4"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6596d8] mx-auto mb-4"></div>
                 <p className="text-gray-600">Cargando turnos...</p>
               </div>
             </div>
@@ -527,8 +528,8 @@ export default function AgendaDiariaPage() {
             <div className="mt-6">
               <button
                 onClick={() => setTurnoSeleccionado(null)}
-                className="w-full px-4 py-3 bg-gradient-to-r from-orange-400 to-yellow-400 text-white 
-                         rounded-lg hover:from-orange-500 hover:to-yellow-500 font-semibold 
+                className="w-full px-4 py-3 bg-gradient-to-r from-[#6596d8] to-[#b5e4e6] text-white 
+                         rounded-lg hover:from-[#2e75d4] hover:to-[#8ddee1] font-semibold 
                          transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
               >
                 Cerrar
