@@ -9,17 +9,18 @@ datasource db {
 }
 
 model pacientes {
-  paciente_id      Int               @id @default(autoincrement())
   nombre           String            @db.VarChar(120)
   apellido         String            @db.VarChar(120)
-  documento        String?           @unique(map: "documento") @db.VarChar(40)
   email            String?           @unique(map: "email") @db.VarChar(120)
   telefono         String?           @db.VarChar(40)
-  genero           pacientes_genero?
-  fecha_nacimiento DateTime?         @db.Date
-  obra_social_id   Int?
-  fecha_registro   DateTime?         @db.Date
+  documento        String?           @unique(map: "documento") @db.VarChar(40)
   estado           pacientes_estado  @default(activo)
+  fecha_nacimiento DateTime?         @db.Date
+  fecha_registro   DateTime?         @db.DateTime(0)
+  genero           pacientes_genero?
+  obra_social_id   Int?
+  paciente_id      Int               @id @default(autoincrement())
+  historia_clinica HistoriaClinica?
   obras_sociales   obras_sociales?   @relation(fields: [obra_social_id], references: [obra_social_id], map: "fk_paciente_os")
   turnos           turnos[]
 
@@ -27,31 +28,33 @@ model pacientes {
 }
 
 model profesionales {
-  profesional_id Int                  @id @default(autoincrement())
-  usuario_id     Int                  @unique(map: "usuario_id")
-  profesion_id   Int
-  matricula      String?              @db.VarChar(60)
-  estado         profesionales_estado @default(activo)
-  agenda_semanal agenda_semanal[]
-  profesiones    profesiones          @relation(fields: [profesion_id], references: [profesion_id], onUpdate: Restrict, map: "fk_prof_profesion")
-  usuarios       usuarios             @relation(fields: [usuario_id], references: [usuario_id], map: "fk_prof_usuario")
-  turnos         turnos[]
+  estado                  profesionales_estado @default(activo)
+  matricula               String?              @db.VarChar(60)
+  profesion_id            Int
+  profesional_id          Int                  @id @default(autoincrement())
+  usuario_id              Int                  @unique(map: "usuario_id")
+  agenda_semanal          agenda_semanal[]
+  consultas               Consulta[]
+  historias_como_cabecera HistoriaClinica[]    @relation("MedicoCabecera")
+  profesiones             profesiones          @relation(fields: [profesion_id], references: [profesion_id], onUpdate: Restrict, map: "fk_prof_profesion")
+  usuarios                usuarios             @relation(fields: [usuario_id], references: [usuario_id], map: "fk_prof_usuario")
+  turnos                  turnos[]
 
   @@index([profesion_id], map: "ix_prof_profesion")
 }
 
 model turnos {
-  turno_id       Int             @id @default(autoincrement())
   profesional_id Int
   paciente_id    Int
-  obra_social_id Int?
   inicio         DateTime        @db.DateTime(0)
-  duracion_min   Int             @db.SmallInt
   fin            DateTime?       @db.DateTime(0)
+  duracion_min   Int             @db.SmallInt
   estado         turnos_estado   @default(reservado)
-  obras_sociales obras_sociales? @relation(fields: [obra_social_id], references: [obra_social_id], onDelete: Restrict, map: "fk_turno_os")
+  obra_social_id Int?
+  turno_id       Int             @id @default(autoincrement())
   pacientes      pacientes       @relation(fields: [paciente_id], references: [paciente_id], map: "FK_turnos_pacientes")
   profesionales  profesionales   @relation(fields: [profesional_id], references: [profesional_id], map: "FK_turnos_profesionales")
+  obras_sociales obras_sociales? @relation(fields: [obra_social_id], references: [obra_social_id], onDelete: Restrict, map: "fk_turno_os")
 
   @@index([obra_social_id], map: "fk_turno_os")
   @@index([paciente_id, inicio], map: "ix_turnos_paciente")
@@ -107,6 +110,93 @@ model usuarios {
   @@index([rol_id], map: "fk_usuarios_rol")
 }
 
+model HistoriaClinica {
+  historia_id           Int             @id @default(autoincrement())
+  paciente_id           Int             @unique
+  grupo_sanguineo       String?         @db.VarChar(5)
+  estado_civil          String?         @db.VarChar(50)
+  ocupacion             String?         @db.VarChar(120)
+  enfermedades_infancia String?         @db.Text
+  enfermedades_cronicas String?         @db.Text
+  cirugias              String?         @db.Text
+  alergias              String?         @db.Text
+  hospitalizaciones     String?         @db.Text
+  traumatismos          String?         @db.Text
+  medicamentos_actuales String?         @db.Text
+  consume_tabaco        Boolean         @default(false)
+  consume_alcohol       Boolean         @default(false)
+  otras_sustancias      String?         @db.VarChar(255)
+  dieta_ok              Boolean         @default(false)
+  actividad_fisica      NivelActividad?
+  habitos_sueno         HabitosSueno?
+  medico_cabecera_id    Int?
+  sexo                  String?         @db.VarChar(20)
+  consultas             Consulta[]
+  medico_cabecera       profesionales?  @relation("MedicoCabecera", fields: [medico_cabecera_id], references: [profesional_id])
+  pacientes             pacientes       @relation(fields: [paciente_id], references: [paciente_id])
+
+  @@index([medico_cabecera_id], map: "historias_clinicas_medico_cabecera_id_fkey")
+  @@map("historias_clinicas")
+}
+
+model Consulta {
+  consulta_id              Int                    @id @default(autoincrement())
+  historia_id              Int
+  profesional_id           Int
+  fecha_consulta           DateTime               @default(now()) @db.DateTime(0)
+  motivo_consulta          String                 @db.Text
+  enfermedad_actual        String?                @db.Text
+  pa_sistolica             Int?
+  pa_diastolica            Int?
+  frecuencia_cardiaca      Int?
+  frecuencia_respiratoria  Int?
+  temperatura              Decimal?               @db.Decimal(4, 2)
+  peso                     Decimal?               @db.Decimal(5, 2)
+  altura                   Decimal?               @db.Decimal(3, 2)
+  imc                      Decimal?               @db.Decimal(4, 2)
+  notas_evolucion          String?                @db.Text
+  nota_referencia          String?                @db.Text
+  consentimiento_informado Boolean                @default(false)
+  historia                 HistoriaClinica        @relation(fields: [historia_id], references: [historia_id])
+  profesional              profesionales          @relation(fields: [profesional_id], references: [profesional_id])
+  diagnosticos             Diagnostico[]
+  pruebas_complementarias  PruebaComplementaria[]
+
+  @@index([historia_id], map: "consultas_historia_id_fkey")
+  @@index([profesional_id], map: "consultas_profesional_id_fkey")
+  @@map("consultas")
+}
+
+model Diagnostico {
+  diagnostico_id            Int      @id @default(autoincrement())
+  consulta_id               Int
+  fecha_diagnostico         DateTime @default(now()) @db.DateTime(0)
+  juicio_clinico            String?  @db.Text
+  diagnostico_presuntivo    String?  @db.Text
+  diagnostico_definitivo    String?  @db.Text
+  indicacion_terapeutica    String   @db.Text
+  tratamiento_farmacologico String?  @db.Text
+  plan_cuidados             String?  @db.Text
+  recomendaciones           String?  @db.Text
+  pronostico                String?  @db.VarChar(255)
+  consulta                  Consulta @relation(fields: [consulta_id], references: [consulta_id], onDelete: Cascade)
+
+  @@index([consulta_id], map: "diagnosticos_consulta_id_fkey")
+  @@map("diagnosticos")
+}
+
+model PruebaComplementaria {
+  prueba_id   Int        @id @default(autoincrement())
+  consulta_id Int
+  tipo_prueba TipoPrueba @default(laboratorio)
+  descripcion String     @db.VarChar(255)
+  url_archivo String     @db.VarChar(512)
+  consulta    Consulta   @relation(fields: [consulta_id], references: [consulta_id], onDelete: Cascade)
+
+  @@index([consulta_id], map: "pruebas_complementarias_consulta_id_fkey")
+  @@map("pruebas_complementarias")
+}
+
 enum obras_sociales_estado {
   activa
   inactiva
@@ -144,4 +234,23 @@ enum pacientes_genero {
   Mujer
   Hombre
   otro
+}
+
+enum NivelActividad {
+  sedentario
+  ligera
+  moderada
+  intensa
+}
+
+enum HabitosSueno {
+  insuficiente
+  normal
+  excesivo
+}
+
+enum TipoPrueba {
+  laboratorio
+  imagen
+  otro_estudio
 }

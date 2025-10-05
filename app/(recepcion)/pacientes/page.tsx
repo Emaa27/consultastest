@@ -101,6 +101,25 @@ const Filter = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const ArrowUpDown = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+    <path d="m21 16-4 4-4-4"></path>
+    <path d="M17 20V4"></path>
+    <path d="m3 8 4-4 4 4"></path>
+    <path d="M7 4v16"></path>
+  </svg>
+);
+
+const FileText = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+    <polyline points="14 2 14 8 20 8"></polyline>
+    <line x1="16" y1="13" x2="8" y2="13"></line>
+    <line x1="16" y1="17" x2="8" y2="17"></line>
+    <polyline points="10 9 9 9 8 9"></polyline>
+  </svg>
+);
+
 /* ---------------- Date helpers ---------------- */
 const HOY = new Date();
 const MAX_YEAR = HOY.getFullYear();
@@ -129,17 +148,41 @@ function parseDDMMYYYY(raw: string): { iso?: string; error?: string } {
   return { iso: `${yy}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}` };
 }
 
-/* ---------------- Types ---------------- */
-type Form = {
-  nombre: string;
-  apellido: string;
-  documento: string;
-  email: string;
-  telefono: string;
-  fecha_nacimiento: string;
-  obra_social_id: number | null;
-};
+/* ---------------- Validation helpers ---------------- */
+function validateNombre(nombre: string): string {
+  if (!nombre.trim()) return 'El nombre es requerido';
+  if (!/^[a-záéíóúüñA-ZÁÉÍÓÚÜÑ\s]+$/.test(nombre)) return 'Solo se permiten letras';
+  if (nombre.trim().length < 2) return 'Mínimo 2 caracteres';
+  return '';
+}
 
+function validateApellido(apellido: string): string {
+  if (!apellido.trim()) return 'El apellido es requerido';
+  if (!/^[a-záéíóúüñA-ZÁÉÍÓÚÜÑ\s]+$/.test(apellido)) return 'Solo se permiten letras';
+  if (apellido.trim().length < 2) return 'Mínimo 2 caracteres';
+  return '';
+}
+
+function validateDNI(dni: string): string {
+  if (!dni.trim()) return 'El DNI es requerido';
+  if (!/^\d{8}$/.test(dni)) return 'Debe tener exactamente 8 dígitos';
+  return '';
+}
+
+function validateTelefono(telefono: string): string {
+  if (!telefono.trim()) return 'El teléfono es requerido';
+  if (!/^\d{10}$/.test(telefono)) return 'Debe tener 10 dígitos';
+  return '';
+}
+
+function validateEmail(email: string): string {
+  if (!email.trim()) return 'El email es requerido';
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) return 'Email inválido';
+  return '';
+}
+
+/* ---------------- Types ---------------- */
 type ObraSocial = {
   obra_social_id: number;
   nombre: string;
@@ -153,9 +196,18 @@ type Paciente = {
   email?: string;
   telefono?: string;
   fecha_nacimiento?: string;
+  fecha_registro?: string;
   genero?: string;
   obra_social_id?: number | null;
   obras_sociales?: { nombre: string };
+};
+
+type ValidationErrors = {
+  nombre?: string;
+  apellido?: string;
+  documento?: string;
+  telefono?: string;
+  email?: string;
 };
 
 const ITEMS_PER_PAGE = 10;
@@ -170,6 +222,7 @@ export default function GestionPacientesPage() {
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedObraSocial, setSelectedObraSocial] = useState<string>('todos');
+  const [sortOrder, setSortOrder] = useState<'recientes' | 'antiguos'>('recientes');
   const [currentPage, setCurrentPage] = useState(1);
 
   const [form, setForm] = useState<Paciente>({
@@ -185,16 +238,19 @@ export default function GestionPacientesPage() {
 
   const [dobRaw, setDobRaw] = useState('');
   const [dobError, setDobError] = useState('');
+  const [errors, setErrors] = useState<ValidationErrors>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
-  /* --------- Load data --------- */
   useEffect(() => {
     cargarPacientes();
     cargarObrasSociales();
   }, []);
+
   const obrasSinParticular = useMemo(
     () => obras.filter(o => (o.nombre || '').toLowerCase() !== 'particular'),
     [obras]
   );
+
   const cargarPacientes = async () => {
     setLoadingPacientes(true);
     try {
@@ -221,7 +277,6 @@ export default function GestionPacientesPage() {
     }
   };
 
-  /* --------- Filters + sort --------- */
   const pacientesFiltradosYOrdenados = useMemo(() => {
     let filtrados = [...pacientes];
 
@@ -234,23 +289,27 @@ export default function GestionPacientesPage() {
       );
     }
 
-      if (selectedObraSocial !== 'todos') {
-    if (selectedObraSocial === 'particular') {
-      filtrados = filtrados.filter(
-        (p) => p.obras_sociales?.nombre?.toLowerCase() === 'particular'
-      );
-    } else {
-      filtrados = filtrados.filter(
-        (p) => p.obra_social_id?.toString() === selectedObraSocial
-      );
+    if (selectedObraSocial !== 'todos') {
+      if (selectedObraSocial === 'particular') {
+        filtrados = filtrados.filter(
+          (p) => !p.obra_social_id || p.obras_sociales?.nombre?.toLowerCase() === 'particular'
+        );
+      } else {
+        filtrados = filtrados.filter(
+          (p) => p.obra_social_id?.toString() === selectedObraSocial
+        );
+      }
     }
-  }
 
-    filtrados.sort((a, b) => a.apellido.toLowerCase().localeCompare(b.apellido.toLowerCase()));
+    filtrados.sort((a, b) => {
+      const dateA = a.fecha_registro ? new Date(a.fecha_registro).getTime() : 0;
+      const dateB = b.fecha_registro ? new Date(b.fecha_registro).getTime() : 0;
+      return sortOrder === 'recientes' ? dateB - dateA : dateA - dateB;
+    });
+
     return filtrados;
-  }, [pacientes, searchTerm, selectedObraSocial]);
+  }, [pacientes, searchTerm, selectedObraSocial, sortOrder]);
 
-  /* --------- Pagination --------- */
   const totalPages = Math.ceil(pacientesFiltradosYOrdenados.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
@@ -258,20 +317,111 @@ export default function GestionPacientesPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedObraSocial]);
+  }, [searchTerm, selectedObraSocial, sortOrder]);
 
-  /* --------- Handlers --------- */
-  const onChange =
-    (name: keyof Paciente) =>
-      (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        let value: any = e.target.value;
-        if (name === 'obra_social_id') value = value ? Number(value) : null;
-        setForm((f) => ({ ...f, [name]: value }));
-      };
+  const handleBlur = (field: keyof ValidationErrors) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+    validateField(field);
+  };
+
+  const validateField = (field: keyof ValidationErrors) => {
+    let error = '';
+    switch (field) {
+      case 'nombre':
+        error = validateNombre(form.nombre);
+        break;
+      case 'apellido':
+        error = validateApellido(form.apellido);
+        break;
+      case 'documento':
+        error = validateDNI(form.documento);
+        break;
+      case 'telefono':
+        error = validateTelefono(form.telefono || '');
+        break;
+      case 'email':
+        error = validateEmail(form.email || '');
+        break;
+    }
+    setErrors(prev => ({ ...prev, [field]: error }));
+    return error === '';
+  };
+
+  const validateAllFields = (): boolean => {
+    const newErrors: ValidationErrors = {
+      nombre: validateNombre(form.nombre),
+      apellido: validateApellido(form.apellido),
+      documento: validateDNI(form.documento),
+      telefono: validateTelefono(form.telefono || ''),
+      email: validateEmail(form.email || ''),
+    };
+    setErrors(newErrors);
+    setTouched({
+      nombre: true,
+      apellido: true,
+      documento: true,
+      telefono: true,
+      email: true,
+    });
+    return Object.values(newErrors).every(error => !error);
+  };
+
+  const handleNombreChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^a-záéíóúüñA-ZÁÉÍÓÚÜÑ\s]/g, '');
+    setForm(f => ({ ...f, nombre: value }));
+    if (touched.nombre) validateField('nombre');
+  };
+
+  const handleApellidoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^a-záéíóúüñA-ZÁÉÍÓÚÜÑ\s]/g, '');
+    setForm(f => ({ ...f, apellido: value }));
+    if (touched.apellido) validateField('apellido');
+  };
+
+  const handleDNIChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '').slice(0, 8);
+    setForm(f => ({ ...f, documento: value }));
+    if (touched.documento) validateField('documento');
+  };
+
+  const handleTelefonoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+    setForm(f => ({ ...f, telefono: value }));
+    if (touched.telefono) validateField('telefono');
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm(f => ({ ...f, email: e.target.value }));
+    if (touched.email) validateField('email');
+  };
+
+  const handleGeneroChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm(f => ({ ...f, genero: e.target.value }));
+  };
+
+  const handleObraSocialChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value ? Number(e.target.value) : null;
+    setForm(f => ({ ...f, obra_social_id: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateAllFields()) {
+      alert('Por favor corrige los errores en el formulario');
+      return;
+    }
+
     if (dobRaw && dobError) return;
+
+    const documentoExiste = pacientes.some(
+      p => p.documento === form.documento.trim()
+    );
+
+    if (documentoExiste) {
+      alert('Ya existe un paciente con este documento');
+      return;
+    }
 
     setIsLoading(true);
     setSuccessMessage('');
@@ -279,6 +429,11 @@ export default function GestionPacientesPage() {
     try {
       const payload = {
         ...form,
+        documento: form.documento.trim(),
+        nombre: form.nombre.trim(),
+        apellido: form.apellido.trim(),
+        email: form.email?.trim() || null,
+        telefono: form.telefono?.trim() || null,
         fecha_nacimiento: form.fecha_nacimiento || null,
         obra_social_id: form.obra_social_id ?? null,
       };
@@ -301,11 +456,14 @@ export default function GestionPacientesPage() {
         documento: '',
         email: '',
         telefono: '',
+        genero: '',
         fecha_nacimiento: '',
         obra_social_id: null,
       });
       setDobRaw('');
       setDobError('');
+      setErrors({});
+      setTouched({});
 
       setTimeout(() => {
         setIsModalOpen(false);
@@ -328,17 +486,13 @@ export default function GestionPacientesPage() {
 
   const goToPage = (page: number) => setCurrentPage(Math.max(1, Math.min(page, totalPages)));
 
-  /* --------- UI --------- */
   return (
-    //cambio aquí
-    <div className="p-6">
-      {/* Header */}
+    <div className="min-h-screen bg-gray-50 p-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-800 mb-2">Gestión de Pacientes</h1>
         <p className="text-gray-600">Administra la información de los pacientes del consultorio</p>
       </div>
 
-      {/* Top controls */}
       <div className="space-y-4 mb-6">
         <div className="flex flex-col sm:flex-row gap-4">
           <button
@@ -367,34 +521,46 @@ export default function GestionPacientesPage() {
           </div>
         </div>
 
-        {/* Filters */}
-
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Filter className="w-5 h-5 text-gray-600" />
-            <label className="text-sm font-medium text-gray-700">Filtrar por obra social:</label>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Filter className="w-5 h-5 text-gray-600" />
+              <label className="text-sm font-medium text-gray-700">Obra social:</label>
+            </div>
+            <select
+              value={selectedObraSocial}
+              onChange={(e) => setSelectedObraSocial(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none 
+                        focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+            >
+              <option value="todos">Todas</option>
+              <option value="particular">Particular</option>
+              {obrasSinParticular.map(obra => (
+                <option key={obra.obra_social_id} value={obra.obra_social_id.toString()}>
+                  {obra.nombre}
+                </option>
+              ))}
+            </select>
           </div>
-          <select
-            value={selectedObraSocial}
-            onChange={(e) => setSelectedObraSocial(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none 
-                      focus:ring-2 focus:ring-orange-400 focus:border-transparent"
-          >
-            <option value="todos">Todas</option>
-            {/* Opción especial: sin obra social (NULL) */}
-            <option value="particular">Particular</option>
 
-            {/* 2) Solo obras reales (sin el registro 'PARTICULAR' de la tabla) */}
-            {obrasSinParticular.map(obra => (
-              <option key={obra.obra_social_id} value={obra.obra_social_id.toString()}>
-                {obra.nombre}
-              </option>
-            ))}
-          </select>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <ArrowUpDown className="w-5 h-5 text-gray-600" />
+              <label className="text-sm font-medium text-gray-700">Ordenar:</label>
+            </div>
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value as 'recientes' | 'antiguos')}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none 
+                        focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+            >
+              <option value="recientes">Más recientes</option>
+              <option value="antiguos">Más antiguos</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
         {loadingPacientes ? (
           <div className="flex justify-center items-center h-64">
@@ -410,11 +576,6 @@ export default function GestionPacientesPage() {
                   : 'No hay pacientes registrados'
                 : 'No hay pacientes en esta página'}
             </p>
-            <p className="text-sm mt-2">
-              {pacientesFiltradosYOrdenados.length === 0 && !searchTerm && selectedObraSocial === 'todos'
-                ? 'Haz clic en "Registrar Nuevo Paciente" para comenzar'
-                : 'Intenta con otros filtros o términos de búsqueda'}
-            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -428,6 +589,7 @@ export default function GestionPacientesPage() {
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Teléfono</th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">F. Nacimiento</th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Obra Social</th>
+                  <th className="px-6 py-4 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">Acciones</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -442,6 +604,17 @@ export default function GestionPacientesPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {paciente.obras_sociales?.nombre ?? '—'}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <a
+                        href={`/pacientes/${paciente.paciente_id}/historia`}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-orange-100 text-orange-600 
+                                   rounded-lg hover:bg-orange-200 transition-colors text-sm font-medium"
+                        title="Ver Historia Clínica"
+                      >
+                        <FileText className="w-4 h-4" />
+                        Historia Clínica
+                      </a>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -449,7 +622,6 @@ export default function GestionPacientesPage() {
           </div>
         )}
 
-        {/* Pagination */}
         {!loadingPacientes && pacientesFiltradosYOrdenados.length > 0 && (
           <div className="px-6 py-3 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-3">
             <p className="text-sm text-gray-600">
@@ -484,8 +656,7 @@ export default function GestionPacientesPage() {
                       <button
                         key={i}
                         onClick={() => goToPage(pageNumber)}
-                        className={`px-3 py-1 rounded-lg font-medium transition-colors ${currentPage === pageNumber ? 'bg-orange-400 text-white' : 'hover:bg-gray-100 text-gray-700'
-                          }`}
+                        className={`px-3 py-1 rounded-lg font-medium transition-colors ${currentPage === pageNumber ? 'bg-orange-400 text-white' : 'hover:bg-gray-100 text-gray-700'}`}
                       >
                         {pageNumber}
                       </button>
@@ -507,11 +678,9 @@ export default function GestionPacientesPage() {
         )}
       </div>
 
-      {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-transparent backdrop-blur-sm flex justify-center items-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex justify-center items-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-3xl shadow-2xl max-h-[90vh] overflow-y-auto">
-            {/* Modal header */}
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
                 <div className="p-2 bg-gradient-to-br from-orange-400 to-yellow-400 rounded-lg">
@@ -524,36 +693,40 @@ export default function GestionPacientesPage() {
               </button>
             </div>
 
-            {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Datos Personales */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
                   <User className="w-5 h-5 text-orange-400" />
                   Datos Personales
                 </h3>
 
-                {/* 2 cols en md, 1 col en mobile */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Documento */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                       <CreditCard className="w-4 h-4 text-orange-400" />
                       Documento *
                     </label>
                     <input
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 
-                                 focus:ring-orange-400 focus:border-transparent transition-all duration-200"
-                      placeholder="DNI sin puntos"
+                      className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 
+                                 focus:ring-orange-400 focus:border-transparent transition-all duration-200
+                                 ${touched.documento && errors.documento ? 'border-red-500' : 'border-gray-300'}`}
+                      placeholder="8 dígitos sin puntos"
                       value={form.documento}
-                      onChange={onChange('documento')}
+                      onChange={handleDNIChange}
+                      onBlur={() => handleBlur('documento')}
+                      maxLength={8}
                       required
                     />
+                    {touched.documento && errors.documento && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {errors.documento}
+                      </p>
+                    )}
                   </div>
 
-                  {/* Fecha de nacimiento */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                       <Calendar className="w-4 h-4 text-orange-400" />
                       Fecha de Nacimiento
                     </label>
@@ -583,78 +756,92 @@ export default function GestionPacientesPage() {
                     )}
                   </div>
 
-                  {/* Nombre */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Nombre *</label>
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">Nombre *</label>
                     <input
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 
-                                 focus:ring-orange-400 focus:border-transparent transition-all duration-200"
-                      placeholder="Ingrese el nombre"
+                      className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 
+                                 focus:ring-orange-400 focus:border-transparent transition-all duration-200
+                                 ${touched.nombre && errors.nombre ? 'border-red-500' : 'border-gray-300'}`}
+                      placeholder="Solo letras"
                       value={form.nombre}
-                      onChange={onChange('nombre')}
+                      onChange={handleNombreChange}
+                      onBlur={() => handleBlur('nombre')}
                       required
                     />
+                    {touched.nombre && errors.nombre && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {errors.nombre}
+                      </p>
+                    )}
                   </div>
 
-                  {/* Apellido */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Apellido *</label>
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">Apellido *</label>
                     <input
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 
-                                 focus:ring-orange-400 focus:border-transparent transition-all duration-200"
-                      placeholder="Ingrese el apellido"
+                      className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 
+                                 focus:ring-orange-400 focus:border-transparent transition-all duration-200
+                                 ${touched.apellido && errors.apellido ? 'border-red-500' : 'border-gray-300'}`}
+                      placeholder="Solo letras"
                       value={form.apellido}
-                      onChange={onChange('apellido')}
+                      onChange={handleApellidoChange}
+                      onBlur={() => handleBlur('apellido')}
                       required
                     />
+                    {touched.apellido && errors.apellido && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {errors.apellido}
+                      </p>
+                    )}
                   </div>
                 </div>
-                {/* Género */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
+
+                <div className="mt-4">
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-3">
                     Género *
                   </label>
                   <div className="flex gap-8 items-center p-3 border border-gray-300 rounded-lg">
-                    <label className="flex items-center gap-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="radio"
                         name="genero"
                         value="Hombre"
                         checked={form.genero === 'Hombre'}
-                        onChange={onChange('genero')}
+                        onChange={handleGeneroChange}
                         required
-                        className="text-orange-400 focus:ring-orange-400"
+                        className="text-orange-400 focus:ring-orange-400 cursor-pointer"
                       />
                       Hombre
                     </label>
-                    <label className="flex items-center gap-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="radio"
                         name="genero"
                         value="Mujer"
                         checked={form.genero === 'Mujer'}
-                        onChange={onChange('genero')}
+                        onChange={handleGeneroChange}
                         required
-                        className="text-orange-400 focus:ring-orange-400"
+                        className="text-orange-400 focus:ring-orange-400 cursor-pointer"
                       />
                       Mujer
                     </label>
-                    <label className="flex items-center gap-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="radio"
                         name="genero"
                         value="otro"
                         checked={form.genero === 'otro'}
-                        onChange={onChange('genero')}
+                        onChange={handleGeneroChange}
                         required
-                        className="text-orange-400 focus:ring-orange-400"
+                        className="text-orange-400 focus:ring-orange-400 cursor-pointer"
                       />
                       Otro
                     </label>
                   </div>
                 </div>
               </div>
-              {/* Contacto */}
+
               <div>
                 <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
                   <Phone className="w-5 h-5 text-orange-400" />
@@ -662,52 +849,69 @@ export default function GestionPacientesPage() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                       <Mail className="w-4 h-4 text-orange-400" />
                       Email *
                     </label>
                     <input
                       type="email"
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 
-                                 focus:ring-orange-400 focus:border-transparent transition-all duration-200"
+                      className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 
+                                 focus:ring-orange-400 focus:border-transparent transition-all duration-200
+                                 ${touched.email && errors.email ? 'border-red-500' : 'border-gray-300'}`}
                       placeholder="correo@ejemplo.com"
                       value={form.email}
-                      onChange={onChange('email')}
+                      onChange={handleEmailChange}
+                      onBlur={() => handleBlur('email')}
                       required
                     />
+                    {touched.email && errors.email && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {errors.email}
+                      </p>
+                    )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                       <Phone className="w-4 h-4 text-orange-400" />
                       Teléfono *
                     </label>
                     <input
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 
-                                 focus:ring-orange-400 focus:border-transparent transition-all duration-200"
-                      placeholder="Número de teléfono"
+                      className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 
+                                 focus:ring-orange-400 focus:border-transparent transition-all duration-200
+                                 ${touched.telefono && errors.telefono ? 'border-red-500' : 'border-gray-300'}`}
+                      placeholder="10 dígitos (ej: 3815551234)"
                       value={form.telefono}
-                      onChange={onChange('telefono')}
+                      onChange={handleTelefonoChange}
+                      onBlur={() => handleBlur('telefono')}
+                      inputMode="numeric"
+                      maxLength={10}
                       required
                     />
+                    {touched.telefono && errors.telefono && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {errors.telefono}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* Obra social */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
                   <Shield className="w-5 h-5 text-orange-400" />
                   Cobertura Médica
                 </h3>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Obra Social</label>
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">Obra Social</label>
                   <select
                     className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 
                                focus:ring-orange-400 focus:border-transparent transition-all duration-200
                                appearance-none bg-white"
                     value={form.obra_social_id ?? ''}
-                    onChange={onChange('obra_social_id')}
+                    onChange={handleObraSocialChange}
                   >
                     <option value="">Seleccione una obra social</option>
                     {obras.map((o) => (
@@ -719,7 +923,6 @@ export default function GestionPacientesPage() {
                 </div>
               </div>
 
-              {/* Mensaje de éxito */}
               {successMessage && (
                 <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
                   <CheckCircle className="w-5 h-5" />
@@ -727,12 +930,10 @@ export default function GestionPacientesPage() {
                 </div>
               )}
 
-              {/* Nota */}
               <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
                 <p className="text-xs text-orange-700">* Los campos marcados con asterisco son obligatorios</p>
               </div>
 
-              {/* Botones */}
               <div className="flex gap-3 pt-4 border-t border-gray-200">
                 <button
                   type="button"
