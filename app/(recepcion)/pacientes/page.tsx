@@ -494,6 +494,7 @@ export default function GestionPacientesPage() {
       </div>
 
       <div className="space-y-4 mb-6">
+        </div>
         <div className="flex flex-col sm:flex-row gap-4">
           <button
             className="px-6 py-3 bg-gradient-to-r from-orange-400 to-yellow-400 text-white rounded-lg 
