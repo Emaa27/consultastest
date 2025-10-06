@@ -177,7 +177,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
     try {
         // TODO: Obtener profesional_id del usuario autenticado
-        const profesionalActual = 45;
+        const profesionalActual = 8;
 
         const consulta = await prisma.consulta.findFirst({
             where: {
