@@ -120,7 +120,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
         // TODO: Obtener profesional_id del usuario autenticado
         // Por ahora usamos un ID hardcodeado (TEMPORAL)
-        const profesionalActual = 8; // CAMBIAR cuando tengas autenticación
+        const profesionalActual = 9; // CAMBIAR cuando tengas autenticación
 
         const historia = await prisma.historiaClinica.findUnique({
             where: { paciente_id: pacienteId },

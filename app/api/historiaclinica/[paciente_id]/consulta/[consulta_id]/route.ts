@@ -88,7 +88,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
         // TODO: Obtener profesional_id del usuario autenticado
         // Por ahora usamos un ID hardcodeado (TEMPORAL)
-        const profesionalActual = 45; // CAMBIAR cuando tengas autenticación
+        const profesionalActual = 9; // CAMBIAR cuando tengas autenticación
 
         // Buscar la consulta y verificar permisos
         const consulta = await prisma.consulta.findFirst({
@@ -177,7 +177,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
     try {
         // TODO: Obtener profesional_id del usuario autenticado
-        const profesionalActual = 8;
+        const profesionalActual = 9;
 
         const consulta = await prisma.consulta.findFirst({
             where: {
