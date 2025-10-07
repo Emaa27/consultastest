@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     // Rol → redirección
     const roleName = usuario.roles.nombre.toLowerCase();
     let redirectPath = '/';
-    if (roleName === 'recepcion') {
+    if (roleName === 'asistente') {
       redirectPath = '/turnos';
     } else if (roleName === 'profesional') {
       redirectPath = '/agendadiaria';
