@@ -25,6 +25,13 @@ const UserPlus = ({ className }: IconProps) => (
   </svg>
 );
 
+export const User = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+    <circle cx="12" cy="7" r="4"></circle>
+  </svg>
+);
+
 const Search = ({ className }: IconProps) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <circle cx="11" cy="11" r="8"></circle>
@@ -94,11 +101,10 @@ const NavbarGerente: React.FC = () => {
   }, []);
 
   const menuItems = [
-    { id: 'turnos', label: 'Calendario', icon: Calendar, href: '/turnos' },
-    { id: 'pacientes', label: 'Pacientes', icon: UserPlus, href: '/pacientes' },
-    { id: 'historial', label: 'Historial turnos', icon: Search, href: '/buscar' },
-    { id: 'profesionales', label: 'Profesionales', icon: UserCheck, href: '/profesionales' },
-    { id: 'dashboard', label: 'Dashboard', icon: BarChart3, href: '/dashboard' },
+    { id: 'turnos', label: 'Metricas', icon: BarChart3, href: '/turnos' },
+    { id: 'pacientes', label: 'Pacientes', icon: User, href: '/pacientes' },
+    { id: 'historial', label: 'Profesionales', icon: User, href: '/buscar' },
+    { id: 'profesionales', label: 'Historial Turnos', icon: Calendar, href: '/profesionales' },
   ];
 
   const isActive = (href: string) =>

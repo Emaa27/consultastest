@@ -89,7 +89,7 @@ export default function NavbarProfesional() {
   }, []);
 
   const menuItems = [
-    { id: 'agenda', label: 'Mi Agenda', icon: Calendar, href: '/profesional/agendadiaria' },
+    { id: 'agenda', label: 'Mi Agenda', icon: Calendar, href: '/agendadiaria' },
     { id: 'pacientes', label: 'Mis Pacientes', icon: Users, href: '/profesional/pacientes' },
     { id: 'historias', label: 'Historias Clínicas', icon: FileText, href: '/profesional/historias' },
     { id: 'perfil', label: 'Mi Perfil', icon: UserCheck, href: '/profesional/perfil' },

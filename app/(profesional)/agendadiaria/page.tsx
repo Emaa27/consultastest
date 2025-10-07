@@ -65,7 +65,9 @@ type Turno = {
   inicio: string;
   fin?: string;
   estado: EstadoTurno;
+  paciente_id?: number; // <- Agregá este campo que viene de la tabla turnos
   pacientes?: { 
+    paciente_id: number; // <- Y este que viene de la tabla pacientes
     nombre: string;
     apellido: string;
     documento?: string;
@@ -759,12 +761,40 @@ export default function AgendaDiariaPage() {
               </div>
             </div>
 
-            <div className="mt-6">
+            <div className="mt-6 space-y-3">
+              {/* Botón de Atender Consulta - Solo para turnos recepcionados */}
+              {/* Botón de Atender Consulta - Solo para turnos recepcionados */}
+              {turnoSeleccionado.estado === "recepcionado" && turnoSeleccionado.pacientes && (
+                  <button
+                    onClick={() => {
+                      // El paciente_id viene del campo relacional en turnos
+                      const pacienteId = turnoSeleccionado.paciente_id;
+                      
+                      if (pacienteId) {
+                        // Ruta correcta según tu estructura de carpetas
+                        router.push(`/pacientesP/${pacienteId}/historia`);
+                      } else {
+                        alert('Error: No se pudo obtener el ID del paciente');
+                      }
+                    }}
+                    className="w-full px-4 py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white 
+                            rounded-lg hover:from-indigo-600 hover:to-indigo-700 font-semibold 
+                            transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]
+                            flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    Atender Consulta
+                  </button>
+                )}
+
               <button
                 onClick={() => setTurnoSeleccionado(null)}
                 className="w-full px-4 py-3 bg-gradient-to-r from-[#6596d8] to-[#b5e4e6] text-white 
-                         rounded-lg hover:from-[#2e75d4] hover:to-[#8ddee1] font-semibold 
-                         transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                        rounded-lg hover:from-[#2e75d4] hover:to-[#8ddee1] font-semibold 
+                        transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
               >
                 Cerrar
               </button>

@@ -120,6 +120,25 @@ const FileText = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const Edit = ({ className }: { className?: string }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    {/* cuerpo del lápiz */}
+    <path d="M13.5 6.5 3 17l-1 4 4-1 10.5-10.5" />
+    {/* unión lápiz-punta */}
+    <path d="M15 5l4 4" />
+    {/* punta */}
+    <path d="M20.5 3.5a2.828 2.828 0 1 1 4 4" />
+  </svg>
+);
+
 /* ---------------- Date helpers ---------------- */
 const HOY = new Date();
 const MAX_YEAR = HOY.getFullYear();
@@ -613,8 +632,8 @@ export default function GestionPacientesPage() {
                                    rounded-lg hover:bg-sky-200 transition-colors text-sm font-medium"
                         title="Ver Historia Clínica"
                       >
-                        <FileText className="w-4 h-4" />
-                        Detalle 
+                        <Edit className="w-4 h-4" />
+                        Editar 
                       </a>
                     </td>
                   </tr>

@@ -2,7 +2,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 type RouteContext = {
-    params: { paciente_id: string };
+    params: Promise<{ paciente_id: string }>;
 };
 
 interface NuevaConsultaBody {
@@ -22,7 +22,8 @@ interface NuevaConsultaBody {
 }
 
 export async function POST(request: NextRequest, context: RouteContext) {
-    const pacienteId = parseInt(context.params.paciente_id, 10);
+    const params = await context.params;
+    const pacienteId = parseInt(params.paciente_id, 10);
 
     if (isNaN(pacienteId)) {
         return NextResponse.json(
@@ -149,7 +150,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
 }
 
 export async function GET(request: NextRequest, context: RouteContext) {
-    const pacienteId = parseInt(context.params.paciente_id, 10);
+    const params = await context.params;
+    const pacienteId = parseInt(params.paciente_id, 10);
 
     if (isNaN(pacienteId)) {
         return NextResponse.json(

@@ -365,158 +365,97 @@ export default function TurnoModal({
         console.time("[TurnoModal] tiempos:carga");
 
         try {
-        // 1) Agenda
-        const urlAgenda = `/api/agenda_recep?profesional_id=${profesionalId}&dia_semana=${dia_semana}`;
-        console.log("[Agenda] fetch", { urlAgenda });
-        const rAgenda = await fetch(urlAgenda, { cache: "no-store" });
+        // --- 1) Fetch agenda ---
+const urlAgenda = `/api/agenda_recep?profesional_id=${profesionalId}&dia_semana=${dia_semana}`;
+const rAgenda = await fetch(urlAgenda, { cache: "no-store" });
+if (!rAgenda.ok) {
+  console.error("[Agenda] error status", rAgenda.status);
+  setHorarios([]); setHora("");
+  return;
+}
 
-        console.log("[Agenda] status", rAgenda.status, rAgenda.statusText);
-        if (!rAgenda.ok) {
-            console.error("[Agenda] error status", rAgenda.status);
-            setHorarios([]);
-            setHora("");
-            return;
-        }
+const rawAgenda = await rAgenda.json();
+console.log("[Agenda] payload(raw)", rawAgenda);
 
-        const agendaData = await rAgenda.json();
-        console.log("[Agenda] payload", agendaData);
+// --- 2) Desanidar formatos comunes ---
+const unwrapList = (v: any): any[] => {
+  if (Array.isArray(v)) return v;
+  if (!v || typeof v !== "object") return [];
+  if (Array.isArray(v.data)) return v.data;
+  if (Array.isArray(v.items)) return v.items;
+  if (Array.isArray(v.result)) return v.result;
+  if (Array.isArray(v.rows)) return v.rows;
+  if (Array.isArray(v.agendas)) return v.agendas;
+  // si vino 1 objeto simple, lo tratamos como una sola fila
+  return [v];
+};
 
-        if (!agendaData || (Array.isArray(agendaData) && agendaData.length === 0)) {
-            console.warn("[Agenda] sin registros para ese día/profesional");
-            setHorarios([]);
-            setHora("");
-            return;
-        }
+const agendas: Agenda[] = unwrapList(rawAgenda);
+console.log("[Agenda] filas detectadas:", agendas.length, agendas);
 
-        const agenda: Agenda = Array.isArray(agendaData) ? agendaData[0] : agendaData;
-        console.log("[Agenda] tomada", {
-            profesional_id: agenda.profesional_id,
-            dia_semana: agenda.dia_semana,
-            hora_inicio: agenda.hora_inicio,
-            hora_fin: agenda.hora_fin,
-            slot_min: agenda.slot_min,
-        });
+// --- 3) Generar slots de TODAS las filas ---
+const allSlots: string[] = [];
+let anySlotMin: number | null = null;
 
-        // 2) Generar slots (ISO con Z → UTC → local del día elegido)
-        const hIni = hmsFromAny(agenda.hora_inicio);
-        const hFin = hmsFromAny(agenda.hora_fin);
+for (const ag of agendas) {
+  const hIni = hmsFromAny(ag.hora_inicio);
+  const hFin = hmsFromAny(ag.hora_fin);
+  if (!hIni || !hFin) continue;
 
-        if (!hIni || !hFin) {
-        console.error("[Slots] hora_inicio/hora_fin inválidas", {
-            hora_inicio: agenda.hora_inicio,
-            hora_fin: agenda.hora_fin,
-            hIni,
-            hFin,
-        });
-        setHorarios([]); setHora(""); setIsLoadingHorarios(false);
-        return;
-        }
+  const inicio = buildLocalDate(fecha, hIni);
+  const fin = buildLocalDate(fecha, hFin);
+  if (!(inicio < fin)) continue;
 
-        const inicio = buildLocalDate(fecha, hIni);
-        const fin = buildLocalDate(fecha, hFin);
+  const slotMin = Number(ag.slot_min);
+  if (!Number.isFinite(slotMin) || slotMin <= 0) continue;
 
-        console.log("[Slots] horas interpretadas", {
-        raw_inicio: agenda.hora_inicio,
-        raw_fin: agenda.hora_fin,
-        hIni, hFin,
-        inicio_local: inicio.toString(),
-        fin_local: fin.toString(),
-        });
+  anySlotMin = anySlotMin ?? slotMin;
 
-        if (!(inicio < fin)) {
-        console.warn("[Slots] inicio >= fin; no se generan turnos", { inicio: inicio.toString(), fin: fin.toString() });
-        setHorarios([]); setHora(""); setIsLoadingHorarios(false);
-        return;
-        }
+  let cur = new Date(inicio);
+  let guard = 0;
+  while (cur < fin) {
+    allSlots.push(fmtHM(cur));
+    cur = new Date(cur.getTime() + slotMin * 60000);
+    if (++guard > 2000) break;
+  }
+}
 
-        const slotMin = Number(agenda.slot_min);
-        if (!Number.isFinite(slotMin) || slotMin <= 0) {
-        console.error("[Slots] slot_min inválido", { slot_min: agenda.slot_min });
-        setHorarios([]); setHora(""); setIsLoadingHorarios(false);
-        return;
-        }
+const slotsUnicosOrdenados = Array.from(new Set(allSlots)).sort((a, b) => {
+  const [ah, am] = a.split(":").map(Number);
+  const [bh, bm] = b.split(":").map(Number);
+  return ah * 60 + am - (bh * 60 + bm);
+});
 
-        // Bucle de slots
-        const slots: string[] = [];
-        let current = new Date(inicio);
-        let guardrail = 0;
+if (slotsUnicosOrdenados.length === 0) {
+  setHorarios([]); setHora(""); setIsLoadingHorarios(false);
+  return;
+}
 
-        while (current < fin) {
-        slots.push(fmtHM(current));         // "HH:MM"
-        current = new Date(current.getTime() + slotMin * 60000);
-        if (++guardrail > 2000) { console.error("[Slots] loop guardrail"); break; }
-        }
+setSlotMinAgenda(anySlotMin ?? 30);
 
-        console.log("[Slots] generados", { total: slots.length, muestra: slots.slice(0, 10) });
+// --- 4) Filtrar ocupados (igual que ya lo tienes) ---
+const urlOcupados = `/api/turnos?profesional_id=${profesionalId}&fecha=${fecha}`;
+const rOcupados = await fetch(urlOcupados, { cache: "no-store" });
+if (!rOcupados.ok) {
+  setHorarios(slotsUnicosOrdenados);
+  setHora(slotsUnicosOrdenados[0] || "");
+  return;
+}
+const turnosOcupados = await rOcupados.json();
+const horasOcupadas = new Set<string>();
+(turnosOcupados || []).forEach((t: any) => {
+  const d = new Date(t?.inicio);
+  if (!isNaN(d.getTime())) {
+    horasOcupadas.add(formatHM(d));
+  } else if (typeof t?.inicio === "string") {
+    const m = t.inicio.match(/\b(\d{2}):(\d{2})(?::\d{2})?\b/);
+    if (m) horasOcupadas.add(`${m[1]}:${m[2]}`);
+  }
+});
+const slotsDisponibles = slotsUnicosOrdenados.filter(s => !horasOcupadas.has(s));
 
-        // 3) Turnos ocupados
-        const urlOcupados = `/api/turnos?profesional_id=${profesionalId}&fecha=${fecha}`;
-        console.log("[Ocupados] fetch", { urlOcupados });
-        const rOcupados = await fetch(urlOcupados, { cache: "no-store" });
-
-        console.log("[Ocupados] status", rOcupados.status, rOcupados.statusText);
-        if (!rOcupados.ok) {
-            console.error("[Ocupados] error status, uso slots completos sin filtrar");
-            setHorarios(slots);
-            setHora(slots[0] || "");
-            return;
-        }
-
-        const turnosOcupados = await rOcupados.json();
-        console.log("[Ocupados] payload", {
-            count: Array.isArray(turnosOcupados) ? turnosOcupados.length : 0,
-            sample: (turnosOcupados || []).slice?.(0, 5),
-        });
-
-        const horasOcupadas = new Set<string>();
-        (turnosOcupados || []).forEach((turno: any, idx: number) => {
-            const raw = turno?.inicio;
-            if (!raw) {
-            console.warn("[Ocupados] item sin inicio", { idx, turno });
-            return;
-            }
-
-            // 1) Intento parsear Date
-            const d = new Date(raw);
-            if (!isNaN(d.getTime())) {
-            horasOcupadas.add(formatHM(d)); // "HH:MM" local
-            return;
-            }
-
-            // 2) Regex fallback para strings raros
-            if (typeof raw === "string") {
-            const m = raw.match(/\b(\d{2}):(\d{2})(?::\d{2})?\b/);
-            if (m) {
-                horasOcupadas.add(`${m[1]}:${m[2]}`);
-                return;
-            }
-            }
-
-            console.warn("[Ocupados] inicio no parseable", { idx, inicio: raw });
-        });
-
-        // 4) Filtrar disponibles
-        const slotsDisponibles = slots.filter((slot) => !horasOcupadas.has(slot));
-        console.log("[Disponibles] resultado", {
-            totalSlots: slots.length,
-            ocupadas: horasOcupadas.size,
-            disponibles: slotsDisponibles.length,
-            muestra: slotsDisponibles.slice(0, 10),
-        });
-
-        // Para inspección manual
-        (window as any).debugTurnos = {
-            fecha,
-            profesionalId,
-            dia_semana,
-            agenda,
-            slots,
-            horasOcupadas: Array.from(horasOcupadas),
-            slotsDisponibles,
-        };
-
-        setHorarios(slotsDisponibles);
-        setHora(slotsDisponibles[0] || "");
+setHorarios(slotsDisponibles);
+setHora(slotsDisponibles[0] || "");
         } catch (error) {
         console.error("[TurnoModal] error cargando horarios", error);
         setHorarios([]);

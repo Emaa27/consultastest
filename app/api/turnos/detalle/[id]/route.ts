@@ -4,9 +4,10 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     const id = Number(params.id);
     if (!id || Number.isNaN(id)) {
       return NextResponse.json({ error: "Parámetro id inválido" }, { status: 400 });
@@ -36,9 +37,10 @@ export async function GET(
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     const id = Number(params.id);
     if (!id || Number.isNaN(id)) {
       return NextResponse.json({ error: "Parámetro id inválido" }, { status: 400 });
