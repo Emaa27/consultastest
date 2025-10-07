@@ -217,14 +217,6 @@ enum usuarios_estado {
   inactivo
 }
 
-enum turnos_estado {
-  reservado
-  confirmado
-  cancelado
-  no_show
-  atendido
-}
-
 enum pacientes_estado {
   activo
   inactivo
@@ -253,4 +245,13 @@ enum TipoPrueba {
   laboratorio
   imagen
   otro_estudio
+}
+
+enum turnos_estado {
+  reservado
+  recepcionado
+  en_consulta
+  atendido
+  ausente
+  cancelado
 }
