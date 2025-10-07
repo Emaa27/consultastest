@@ -366,7 +366,7 @@ export default function TurnoModal({
 
         try {
         // 1) Agenda
-        const urlAgenda = `/api/agenda_semanal?profesional_id=${profesionalId}&dia_semana=${dia_semana}`;
+        const urlAgenda = `/api/agenda_recep?profesional_id=${profesionalId}&dia_semana=${dia_semana}`;
         console.log("[Agenda] fetch", { urlAgenda });
         const rAgenda = await fetch(urlAgenda, { cache: "no-store" });
 
