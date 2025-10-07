@@ -1,25 +1,23 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-interface HistoriaClinicaBase {
-    paciente_id: number;
-}
-
-export async function POST(req: Request) { 
+export async function POST(req: Request) {
     try {
-        const body: HistoriaClinicaBase = await req.json();
+        const body = await req.json();
         const { paciente_id } = body;
 
+        // 🧩 Validación del ID del paciente
         if (typeof paciente_id !== 'number' || isNaN(paciente_id)) {
             return NextResponse.json(
-                { error: 'ID de paciente inválido o faltante.' }, 
+                { error: 'ID de paciente inválido o faltante.' },
                 { status: 400 }
             );
         }
 
-        const existeHC = await prisma.historiaClinica.findUnique({
-            where: { paciente_id: paciente_id },
-            select: { 
+        // 🩺 Verificar si ya existe historia clínica para ese paciente
+        const existeHC = await prisma.historias_clinicas.findUnique({
+            where: { paciente_id },
+            select: {
                 historia_id: true,
                 medico_cabecera_id: true
             }
@@ -27,15 +25,16 @@ export async function POST(req: Request) {
 
         if (existeHC) {
             return NextResponse.json(
-                { 
+                {
                     message: 'La Historia Clínica ya existe.',
                     historia_id: existeHC.historia_id,
                     medico_cabecera_id: existeHC.medico_cabecera_id
-                }, 
-                { status: 200 } 
+                },
+                { status: 200 }
             );
         }
-        
+
+        // 👨‍⚕️ Buscar un profesional activo con la profesión "Clínico"
         const clinicoDisponible = await prisma.profesionales.findFirst({
             where: {
                 estado: 'activo',
@@ -52,12 +51,12 @@ export async function POST(req: Request) {
                 },
                 _count: {
                     select: {
-                        historias_como_cabecera: true
+                        historias_clinicas: true // ✅ campo real en tu modelo
                     }
                 }
             },
             orderBy: {
-                historias_como_cabecera: {
+                historias_clinicas: {
                     _count: 'asc'
                 }
             }
@@ -70,13 +69,14 @@ export async function POST(req: Request) {
             );
         }
 
-        const nuevaHC = await prisma.historiaClinica.create({ 
+        // 🆕 Crear la nueva historia clínica
+        const nuevaHC = await prisma.historias_clinicas.create({
             data: {
-                paciente_id: paciente_id,
+                paciente_id,
                 medico_cabecera_id: clinicoDisponible.profesional_id
             },
             include: {
-                medico_cabecera: {
+                profesionales: { // ✅ relación correcta según tu schema
                     include: {
                         usuarios: {
                             select: {
@@ -89,16 +89,19 @@ export async function POST(req: Request) {
             }
         });
 
-        return NextResponse.json({ 
-            message: 'Historia Clínica creada correctamente.',
-            data: nuevaHC,
-            medico_asignado: clinicoDisponible.usuarios
-        }, { status: 201 });
+        return NextResponse.json(
+            {
+                message: 'Historia Clínica creada correctamente.',
+                data: nuevaHC,
+                medico_asignado: clinicoDisponible.usuarios
+            },
+            { status: 201 }
+        );
 
     } catch (error) {
         console.error('Error al crear HC:', error);
         return NextResponse.json(
-            { error: 'Error al crear la Historia Clínica.' }, 
+            { error: 'Error al crear la Historia Clínica.' },
             { status: 500 }
         );
     }

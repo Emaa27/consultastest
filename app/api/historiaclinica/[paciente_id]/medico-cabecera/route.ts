@@ -37,9 +37,9 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         }
 
         // Verificar que la HC existe
-        const historiaClinica = await prisma.historiaClinica.findUnique({
+        const historiaClinica = await prisma.historias_clinicas.findUnique({
             where: { paciente_id: pacienteId },
-            select: { 
+            select: {
                 historia_id: true,
                 medico_cabecera_id: true
             }
@@ -82,23 +82,23 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         // - Verificar que el usuario actual es admin, recepción o el médico actual
 
         // Actualizar médico de cabecera
-        const historiaActualizada = await prisma.historiaClinica.update({
+        const historiaActualizada = await prisma.historias_clinicas.update({
             where: { historia_id: historiaClinica.historia_id },
             data: {
-                medico_cabecera_id: nuevo_medico_id
+                medico_cabecera_id: nuevo_medico_id,
             },
             include: {
-                medico_cabecera: {
+                profesionales: { // ✅ nombre real de la relación
                     include: {
                         usuarios: {
                             select: {
                                 nombre: true,
-                                apellido: true
-                            }
-                        }
-                    }
-                }
-            }
+                                apellido: true,
+                            },
+                        },
+                    },
+                },
+            },
         });
 
         return NextResponse.json({

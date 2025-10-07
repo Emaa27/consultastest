@@ -76,7 +76,7 @@ type HistoriaClinicaCompleta = HistoriaClinicaBase & {
   };
 };
 
-const PROFESIONAL_ID = 45;
+const PROFESIONAL_ID = 9;
 
 export default function HistoriaClinicaPage({ 
   params 

@@ -27,16 +27,16 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     try {
-        const consulta = await prisma.consulta.findFirst({
+        const consulta = await prisma.consultas.findFirst({
             where: {
                 consulta_id: consultaId,
-                historia: {
+                historias_clinicas: {
                     paciente_id: pacienteId
                 }
             },
             include: {
                 diagnosticos: true,
-                profesional: {
+                profesionales: { 
                     include: {
                         usuarios: {
                             select: {
@@ -91,10 +91,10 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         const profesionalActual = 8; // CAMBIAR cuando tengas autenticación
 
         // Buscar la consulta y verificar permisos
-        const consulta = await prisma.consulta.findFirst({
+        const consulta = await prisma.consultas.findFirst({
             where: {
                 consulta_id: consultaId,
-                historia: {
+                historias_clinicas: {
                     paciente_id: pacienteId
                 }
             },
@@ -114,7 +114,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         // VALIDACIÓN: Solo el profesional que creó la consulta puede editarla
         if (consulta.profesional_id !== profesionalActual) {
             return NextResponse.json(
-                { 
+                {
                     error: 'Solo el profesional que realizó la consulta puede modificar sus notas de evolución.',
                     profesional_creador: consulta.profesional_id,
                     profesional_actual: profesionalActual
@@ -124,24 +124,24 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         }
 
         // Actualizar solo las notas de evolución
-        const consultaActualizada = await prisma.consulta.update({
+        const consultaActualizada = await prisma.consultas.update({
             where: { consulta_id: consultaId },
             data: {
-                notas_evolucion: body.notas_evolucion
+                notas_evolucion: body.notas_evolucion,
             },
             include: {
                 diagnosticos: true,
-                profesional: {
+                profesionales: { // ✅ nombre correcto
                     include: {
                         usuarios: {
                             select: {
                                 nombre: true,
-                                apellido: true
-                            }
-                        }
-                    }
-                }
-            }
+                                apellido: true,
+                            },
+                        },
+                    },
+                },
+            },
         });
 
         return NextResponse.json({
@@ -179,10 +179,10 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
         // TODO: Obtener profesional_id del usuario autenticado
         const profesionalActual = 8;
 
-        const consulta = await prisma.consulta.findFirst({
+        const consulta = await prisma.consultas.findFirst({
             where: {
                 consulta_id: consultaId,
-                historia: {
+                historias_clinicas: {
                     paciente_id: pacienteId
                 }
             },
@@ -207,7 +207,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
         }
 
         // Eliminar consulta (los diagnósticos se eliminan en cascada)
-        await prisma.consulta.delete({
+        await prisma.consultas.delete({
             where: { consulta_id: consultaId }
         });
 
@@ -223,3 +223,4 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
         );
     }
 }
+
