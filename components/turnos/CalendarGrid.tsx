@@ -33,11 +33,6 @@ export default function CalendarGrid({
     a.getMonth() === b.getMonth() &&
     a.getDate() === b.getDate();
 
-  // (Opcional) cuando Histórico está OFF, ocultar columnas de días pasados
-  const visibleDays = filtros.mostrarHistorico
-    ? daysOfWeek
-    : daysOfWeek.filter((d) => d >= startOfToday || sameDay(d, startOfToday));
-
   const toDate = (d: string | Date) => new Date(d);
 
   const turnosPorDia = (day: Date) =>
@@ -77,7 +72,7 @@ export default function CalendarGrid({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4">
-      {visibleDays.map((day, idx) => {
+      {daysOfWeek.map((day, idx) => {
         const isToday = sameDay(new Date(), day);
         const turnosDelDia = turnosPorDia(day);
 

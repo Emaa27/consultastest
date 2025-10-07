@@ -31,7 +31,7 @@ const estadoGradients: Record<EstadoTurno | "default", string> = {
   recepcionado: "from-indigo-500 to-indigo-600",
   en_consulta:  "from-amber-500 to-orange-600",
   atendido:     "from-emerald-500 to-green-600",
-  ausente:      "from-slate-500 to-gray-600",
+  ausente:      "from-red-400 to-red-600",
   cancelado:    "from-gray-500 to-gray-600",
   default:      "from-gray-300 to-gray-400",
 };

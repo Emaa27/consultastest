@@ -138,6 +138,7 @@ export default function TurnoDetalleModal({ turnoId, open, onOpenChange, onUpdat
                       className="text-sm border border-neutral-300 rounded px-2 py-1"
                     >
                       <option value="recepcionado">Recepcionado</option>
+                      <option value="ausente">Ausente</option>
                       <option value="cancelado">Cancelado</option>
                     </select>
                     <button

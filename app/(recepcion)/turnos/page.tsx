@@ -8,6 +8,7 @@ import CalendarGrid from "@/components/turnos/CalendarGrid";
 import TurnoModal from "@/components/turnos/TurnoModal";
 import FiltrosModal from "@/components/turnos/FiltrosModal";
 import { useTurnos } from "@/hooks/useTurnos";
+import EstadosTurnosLegend from "@/components/turnos/EstadoTurnosLegend";
 import { getStartOfWeek, addDays, formatWeekRangeLabel } from "@/utils/turnos";
 
 type Filtros = {
@@ -85,7 +86,7 @@ export default function TurnosPage() {
           )}
         </button>
       </div>
-
+      <EstadosTurnosLegend />
       {/* Calendario */}
       {isLoadingTurnos ? (
         <div className="flex items-center justify-center h-64">
