@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     } else if (roleName === 'profesional') {
       redirectPath = '/agendadiaria';
     } else {
-      redirectPath = '/dashboard';
+      redirectPath = '/gerente';
     }
 
     // Resolver profesional_id si es profesional

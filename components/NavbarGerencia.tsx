@@ -71,22 +71,21 @@ const X = ({ className }: IconProps) => (
   </svg>
 );
 
-/* ---------- Componente ---------- */
-const Navbar: React.FC = () => {
+/* ---------- Componente (versión GERENTE en VERDE) ---------- */
+const NavbarGerente: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [userName, setUserName] = useState('Usuario');
+  const [userName, setUserName] = useState('Gerente');
   const [userEmail, setUserEmail] = useState('');
   const pathname = usePathname();
   const router = useRouter();
 
-  // Obtener datos del usuario desde localStorage
   useEffect(() => {
     try {
       const userStr = localStorage.getItem('user');
       if (userStr) {
         const user = JSON.parse(userStr);
-        setUserName(user.nombre || 'Usuario');
+        setUserName(user.nombre || 'Gerente');
         setUserEmail(user.email || '');
       }
     } catch (error) {
@@ -114,15 +113,8 @@ const Navbar: React.FC = () => {
     }
   };
 
-  // Obtener iniciales del nombre
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
+  const getInitials = (name: string) =>
+    name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
   return (
     <>
@@ -140,16 +132,16 @@ const Navbar: React.FC = () => {
         {/* Logo */}
         <div className="flex items-center justify-center p-6 border-b border-gray-200">
           <div className={`flex ${isExpanded ? 'flex-col' : 'flex-col'} items-center space-y-3 transition-all duration-300`}>
-            <img 
-              src="/images/eitan-logo.png" 
-              alt="EiTAN Logo" 
-              className={`object-contain transition-all duration-300 ${isExpanded ? 'w-12 h-12' : 'w-10 h-10'}`} 
+            <img
+              src="/images/eitan-logo.png"
+              alt="EiTAN Logo"
+              className={`object-contain transition-all duration-300 ${isExpanded ? 'w-12 h-12' : 'w-10 h-10'}`}
             />
             {isExpanded && (
-              <img 
-                src="/images/eitan-text.png" 
-                alt="EiTAN Salta" 
-                className="h-8 object-contain opacity-0 animate-fade-in" 
+              <img
+                src="/images/eitan-text.png"
+                alt="EiTAN Salta"
+                className="h-8 object-contain opacity-0 animate-fade-in"
               />
             )}
           </div>
@@ -165,7 +157,7 @@ const Navbar: React.FC = () => {
                 href={href}
                 className={`flex items-center px-3 py-3 rounded-xl transition-all duration-200 group relative ${
                   active
-                    ? 'bg-gradient-to-r from-[#6596d8] to-[#b5e4e6] text-white shadow-lg'
+                    ? 'bg-gradient-to-r from-[#16a34a] to-[#86efac] text-white shadow-lg'
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
                 aria-current={active ? 'page' : undefined}
@@ -177,7 +169,7 @@ const Navbar: React.FC = () => {
                     {label}
                   </span>
                 )}
-                
+
                 {/* Tooltip cuando está colapsado */}
                 {!isExpanded && (
                   <div className="absolute left-full ml-2 px-3 py-1 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
@@ -193,7 +185,7 @@ const Navbar: React.FC = () => {
         <div className="p-4 border-t border-gray-200 space-y-3">
           {/* Info del usuario */}
           <div className={`flex items-center ${isExpanded ? 'px-3' : 'justify-center'} transition-all duration-300`}>
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#6596d8] to-[#b5e4e6] flex items-center justify-center text-white font-bold flex-shrink-0">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#16a34a] to-[#86efac] flex items-center justify-center text-white font-bold flex-shrink-0">
               {getInitials(userName)}
             </div>
             {isExpanded && (
@@ -208,7 +200,7 @@ const Navbar: React.FC = () => {
           <button
             type="button"
             onClick={handleLogout}
-            className={`w-full flex items-center px-3 py-3 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-xl transition-all duration-200 group relative ${
+            className={`w-full flex items-center px-3 py-3 text-gray-700 hover:bg-green-50 hover:text-green-700 rounded-xl transition-all duration-200 group relative ${
               !isExpanded && 'justify-center'
             }`}
             title={!isExpanded ? 'Cerrar sesión' : undefined}
@@ -217,7 +209,7 @@ const Navbar: React.FC = () => {
             {isExpanded && (
               <span className="ml-3 font-medium opacity-0 animate-fade-in">Cerrar sesión</span>
             )}
-            
+
             {!isExpanded && (
               <div className="absolute left-full ml-2 px-3 py-1 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
                 Cerrar sesión
@@ -236,7 +228,7 @@ const Navbar: React.FC = () => {
           </div>
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-md text-gray-600 hover:text-[#6596d8] hover:bg-gray-100"
+            className="p-2 rounded-md text-gray-600 hover:text-[#16a34a] hover:bg-gray-100"
           >
             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -260,7 +252,7 @@ const Navbar: React.FC = () => {
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={`flex items-center px-4 py-3 rounded-xl transition-all duration-200 ${
                       active
-                        ? 'bg-gradient-to-r from-[#6596d8] to-[#b5e4e6] text-white shadow-lg'
+                        ? 'bg-gradient-to-r from-[#16a34a] to-[#86efac] text-white shadow-lg'
                         : 'text-gray-700 hover:bg-gray-100'
                     }`}
                     aria-current={active ? 'page' : undefined}
@@ -273,7 +265,7 @@ const Navbar: React.FC = () => {
 
               <div className="pt-4 border-t border-gray-200 space-y-3">
                 <div className="flex items-center px-4 py-2">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#6596d8] to-[#b5e4e6] flex items-center justify-center text-white font-bold">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#16a34a] to-[#86efac] flex items-center justify-center text-white font-bold">
                     {getInitials(userName)}
                   </div>
                   <div className="ml-3">
@@ -285,7 +277,7 @@ const Navbar: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="w-full flex items-center px-4 py-3 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-xl transition-all duration-200"
+                  className="w-full flex items-center px-4 py-3 text-gray-700 hover:bg-green-50 hover:text-green-700 rounded-xl transition-all duration-200"
                 >
                   <LogOut className="w-5 h-5 mr-3" />
                   <span className="font-medium">Cerrar sesión</span>
@@ -301,13 +293,10 @@ const Navbar: React.FC = () => {
           from { opacity: 0; }
           to { opacity: 1; }
         }
-        
-        .animate-fade-in {
-          animation: fade-in 0.3s ease-out forwards;
-        }
+        .animate-fade-in { animation: fade-in 0.3s ease-out forwards; }
       `}</style>
     </>
   );
 };
 
-export default Navbar;
+export default NavbarGerente;
