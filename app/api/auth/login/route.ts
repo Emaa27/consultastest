@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     let redirectPath = '/';
     if (roleName === 'Asistente') {
       redirectPath = '/turnos';
-    } else if (roleName === 'profesional') {
+    } else if (roleName === 'Profesional') {
       redirectPath = '/agendadiaria';
     } else {
       redirectPath = '/dashboard';
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
 
     // Resolver profesional_id si es profesional
     let profesionalId: number | null = null;
-    if (roleName === 'profesional') {
+    if (roleName === 'Profesional') {
       // Si el include vino con algo, úsalo
       const inc = Array.isArray(usuario.profesionales) ? usuario.profesionales[0] : null;
       profesionalId = inc?.profesional_id ?? null;
