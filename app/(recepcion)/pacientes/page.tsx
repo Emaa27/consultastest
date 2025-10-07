@@ -497,10 +497,9 @@ export default function GestionPacientesPage() {
         </div>
         <div className="flex flex-col sm:flex-row gap-4">
           <button
-            className="px-6 py-3 bg-gradient-to-r from-orange-400 to-yellow-400 text-white rounded-lg 
-                       hover:from-orange-500 hover:to-yellow-500 shadow-lg transform transition-all duration-200 
-                       hover:scale-[1.02] active:scale-[0.98] font-semibold flex items-center gap-2 
-                       whitespace-nowrap"
+            className="px-6 py-3 bg-gradient-to-r from-[#6596d8] to-[#b5e4e6] text-white rounded-lg 
+            hover:from-[#2e75d4] hover:to-[#8ddee1] shadow-lg transform transition-all duration-200 
+            hover:scale-[1.02] active:scale-[0.98] font-semibold flex items-center gap-2"
             onClick={() => setIsModalOpen(true)}
           >
             <UserPlus className="w-5 h-5" />
@@ -564,7 +563,7 @@ export default function GestionPacientesPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+      <div className="bg-white rounded-xl shadow-lg overflow-hidden mt-8">
         {loadingPacientes ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6596d8]"></div>
@@ -583,7 +582,7 @@ export default function GestionPacientesPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gradient-to-r from-orange-50 to-yellow-50 border-b border-[#6596d8]/20">
+              <thead className="bg-gradient-to-r from-sky-200 to-gray-100 border-b border-[#6596d8]/20 ">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Documento</th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Apellido</th>
@@ -610,12 +609,12 @@ export default function GestionPacientesPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <a
                         href={`/pacientes/${paciente.paciente_id}/historia`}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-orange-100 text-orange-600 
-                                   rounded-lg hover:bg-orange-200 transition-colors text-sm font-medium"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-sky-100 text-gray-600 
+                                   rounded-lg hover:bg-sky-200 transition-colors text-sm font-medium"
                         title="Ver Historia Clínica"
                       >
                         <FileText className="w-4 h-4" />
-                        Historia Clínica
+                        Detalle 
                       </a>
                     </td>
                   </tr>

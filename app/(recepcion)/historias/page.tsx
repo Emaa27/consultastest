@@ -96,22 +96,22 @@ export default function HistoriasPage() {
   }, []);
 
   return (
-    <main className="p-6 bg-gradient-to-br from-orange-50 to-yellow-50 min-h-screen">
+    <main className="p-6 bg-gradient-to-br min-h-screen">
       {/* Header */}
-      <div className="mb-6 bg-white rounded-2xl p-6 shadow-md border border-orange-100 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-6 bg-white rounded-2xl p-6 shadow-md border border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-800 mb-1">Historias Clínicas</h1>
           <p className="text-gray-600 flex items-center gap-2">
-            <User className="w-5 h-5 text-orange-400" />
-            <span className="font-semibold">Vista profesional</span>
+            <User className="w-5 h-5 text-gray-600" />
+            <span className="font-semibold">Vista Recepcionista</span>
           </p>
         </div>
       </div>
 
       {/* Lista */}
-      <div className="bg-white rounded-2xl p-6 shadow-lg border border-orange-100">
+      <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
         <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-orange-400" />
+          <Calendar className="w-5 h-5 text-gray-600" />
           Pacientes con historia clínica
         </h3>
 
@@ -125,9 +125,9 @@ export default function HistoriasPage() {
               <div
                 key={historia.historia_id}
                 onClick={() => setHistoriaSeleccionada(historia)}
-                className="p-5 rounded-xl bg-gradient-to-r from-orange-100/60 to-yellow-100/50
-                           hover:from-orange-200/60 hover:to-yellow-200/60 cursor-pointer
-                           border border-orange-200 transition-all duration-300 hover:shadow-xl"
+                className="p-5 rounded-xl bg-gradient-to-r from-sky-100 to-sky-200
+                           hover:from-sky-300 hover:to-sky-500 cursor-pointer
+                           border border-gray-200 transition-all duration-300 hover:shadow-xl"
               >
                 <p className="font-semibold text-gray-800 text-lg">
                   {historia.pacientes.apellido}, {historia.pacientes.nombre}
@@ -148,10 +148,10 @@ export default function HistoriasPage() {
       {/* Modal Detalle */}
       {historiaSeleccionada && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-4xl shadow-2xl overflow-y-auto max-h-[90vh] border border-orange-100">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-4xl shadow-2xl overflow-y-auto max-h-[90vh] border border-black-100">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                <div className="p-2 bg-gradient-to-br from-orange-400 to-yellow-400 rounded-lg">
+                <div className="p-2 bg-gradient-to-br from-sky-400 to-sky-600 rounded-lg">
                   <User className="w-6 h-6 text-white" />
                 </div>
                 Historia Clínica
@@ -166,11 +166,11 @@ export default function HistoriasPage() {
 
             {/* Datos del paciente */}
               <h4 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
-                <User className="w-5 h-5 text-orange-400" />
+                <User className="w-5 h-5 text-gray-600" />
                 Datos del paciente
               </h4>
 
-              <div className="bg-orange-50 p-4 rounded-xl border border-orange-100">
+              <div className="bg-gray-100 p-4 rounded-xl border border-gray-200">
                 <p className="font-semibold text-gray-800 text-lg">
                   {historiaSeleccionada.pacientes.apellido}, {historiaSeleccionada.pacientes.nombre}
                 </p>
@@ -186,11 +186,11 @@ export default function HistoriasPage() {
               {/* Secciones médicas */}
               <section className="mt-4">
                 <h4 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                  <User className="w-5 h-5 text-orange-400" />
+                  <User className="w-5 h-5 text-gray-600" />
                   Antecedentes Médicos y Hábitos
                 </h4>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm text-gray-700 bg-orange-50 p-4 rounded-xl border border-orange-100">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm text-gray-700 bg-gray-100 p-4 rounded-xl border border-gray-200">
                   <p><span className="font-medium">Enfermedades de la infancia:</span> {historiaSeleccionada.enfermedades_infancia || 'No registradas'}</p>
                   <p><span className="font-medium">Enfermedades crónicas:</span> {historiaSeleccionada.enfermedades_cronicas || 'No registradas'}</p>
                   <p><span className="font-medium">Cirugías:</span> {historiaSeleccionada.cirugias || 'No registradas'}</p>
@@ -219,14 +219,14 @@ export default function HistoriasPage() {
               {/* Consultas */}
               <section>
                 <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-orange-400" /> Consultas
+                  <Calendar className="w-5 h-5 text-gray-600" /> Consultas
                 </h4>
 
                 {historiaSeleccionada.consultas.length ? (
                   historiaSeleccionada.consultas.map((consulta) => (
                     <div
                       key={consulta.consulta_id}
-                      className="border border-orange-100 rounded-xl p-4 mb-4 bg-orange-50/60 hover:bg-orange-100/60 transition-colors"
+                      className="border border-gray-200 rounded-xl p-4 mb-4 bg-gray-50/60 hover:bg-gray-200/60 transition-colors"
                     >
                       {/* Fecha y motivo */}
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2">
@@ -254,7 +254,7 @@ export default function HistoriasPage() {
 
                       {/* Diagnósticos */}
                       {consulta.diagnosticos?.length ? (
-                        <div className="mt-3 pl-3 border-l-2 border-orange-400 space-y-1">
+                        <div className="mt-3 pl-3 border-l-2 border-gray-200 space-y-1">
                           <p className="font-semibold text-sm text-gray-800">Diagnósticos</p>
                           {consulta.diagnosticos.map((diag) => (
                             <div key={diag.diagnostico_id} className="text-sm text-gray-700">
@@ -270,7 +270,7 @@ export default function HistoriasPage() {
 
                       {/* Pruebas complementarias */}
                       {consulta.pruebas_complementarias?.length ? (
-                        <div className="mt-3 pl-3 border-l-2 border-yellow-400 space-y-1">
+                        <div className="mt-3 pl-3 border-l-2 border-gray-200 space-y-1">
                           <p className="font-semibold text-sm text-gray-800">Pruebas complementarias</p>
                           {consulta.pruebas_complementarias.map((prueba) => (
                             <div key={prueba.prueba_id} className="text-sm text-gray-700">
