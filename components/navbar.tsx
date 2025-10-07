@@ -71,6 +71,20 @@ const X = ({ className }: IconProps) => (
   </svg>
 );
 
+const MedicalRecord = ({ className }: IconProps) => (
+  <svg
+    className={className}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <rect x="4" y="3" width="16" height="18" rx="2" ry="2" />
+    <path d="M8 3v2a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V3" />
+    <line x1="12" y1="11" x2="12" y2="17" />
+    <line x1="9" y1="14" x2="15" y2="14" />
+  </svg>
+);
+
 /* ---------- Componente ---------- */
 const Navbar: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -97,7 +111,7 @@ const Navbar: React.FC = () => {
   const menuItems = [
     { id: 'turnos', label: 'Calendario', icon: Calendar, href: '/turnos' },
     { id: 'pacientes', label: 'Pacientes', icon: UserPlus, href: '/pacientes' },
-    { id: 'historial', label: 'Historial turnos', icon: Search, href: '/buscar' },
+    { id: 'historial', label: 'Historias Clinicas', icon: MedicalRecord, href: '/historias' },
     { id: 'profesionales', label: 'Profesionales', icon: UserCheck, href: '/profesionales' },
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3, href: '/dashboard' },
   ];
