@@ -48,7 +48,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
             );
         }
 
-        const historiaClinica = await prisma.historiaClinica.findFirst({
+        const historiaClinica = await prisma.historias_clinicas.findFirst({
             where: {
                 historia_id: body.historia_id,
                 paciente_id: pacienteId,
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
                 consultaData.notas_evolucion = body.notas_evolucion;
             }
 
-            const consulta = await tx.consulta.create({
+            const consulta = await tx.consultas.create({
                 data: consultaData,
             });
 
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
                 diagnosticoData.indicacion_terapeutica = body.indicacion_terapeutica;
             }
 
-            const diagnostico = await tx.diagnostico.create({
+            const diagnostico = await tx.diagnosticos.create({
                 data: diagnosticoData,
             });
 
@@ -159,7 +159,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     try {
-        const historiaClinica = await prisma.historiaClinica.findUnique({
+        const historiaClinica = await prisma.historias_clinicas.findUnique({
             where: { paciente_id: pacienteId },
             select: { historia_id: true }
         });
@@ -171,22 +171,22 @@ export async function GET(request: NextRequest, context: RouteContext) {
             );
         }
 
-        const consultas = await prisma.consulta.findMany({
+        const consultas = await prisma.consultas.findMany({
             where: { historia_id: historiaClinica.historia_id },
             orderBy: { fecha_consulta: 'desc' },
             include: {
                 diagnosticos: true,
-                profesional: {
+                profesionales: { // ojo: el nombre correcto de la relación
                     select: {
                         profesional_id: true,
                         usuarios: {
                             select: {
                                 nombre: true,
                                 apellido: true,
-                            }
-                        }
-                    }
-                }
+                            },
+                        },
+                    },
+                },
             },
         });
 

@@ -8,39 +8,155 @@ datasource db {
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
+model agenda_semanal {
+  agenda_id      Int                   @id @default(autoincrement())
+  profesional_id Int
+  dia_semana     Int                   @db.TinyInt
+  hora_inicio    DateTime              @db.Time(0)
+  hora_fin       DateTime              @db.Time(0)
+  slot_min       Int                   @db.SmallInt
+  estado         agenda_semanal_estado @default(activo)
+  profesionales  profesionales         @relation(fields: [profesional_id], references: [profesional_id], onDelete: Cascade, map: "fk_agenda_prof")
+
+  @@unique([profesional_id, dia_semana, hora_inicio, hora_fin], map: "uq_agenda")
+}
+
+model consultas {
+  consulta_id              Int                       @id @default(autoincrement())
+  historia_id              Int
+  profesional_id           Int
+  fecha_consulta           DateTime                  @default(now()) @db.DateTime(0)
+  motivo_consulta          String                    @db.Text
+  enfermedad_actual        String?                   @db.Text
+  pa_sistolica             Int?
+  pa_diastolica            Int?
+  frecuencia_cardiaca      Int?
+  frecuencia_respiratoria  Int?
+  temperatura              Decimal?                  @db.Decimal(4, 2)
+  peso                     Decimal?                  @db.Decimal(5, 2)
+  altura                   Decimal?                  @db.Decimal(3, 2)
+  imc                      Decimal?                  @db.Decimal(4, 2)
+  notas_evolucion          String?                   @db.Text
+  nota_referencia          String?                   @db.Text
+  consentimiento_informado Boolean                   @default(false)
+  historias_clinicas       historias_clinicas        @relation(fields: [historia_id], references: [historia_id])
+  profesionales            profesionales             @relation(fields: [profesional_id], references: [profesional_id])
+  diagnosticos             diagnosticos[]
+  pruebas_complementarias  pruebas_complementarias[]
+
+  @@index([historia_id], map: "consultas_historia_id_fkey")
+  @@index([profesional_id], map: "consultas_profesional_id_fkey")
+}
+
+model diagnosticos {
+  diagnostico_id            Int       @id @default(autoincrement())
+  consulta_id               Int
+  fecha_diagnostico         DateTime  @default(now()) @db.DateTime(0)
+  juicio_clinico            String?   @db.Text
+  diagnostico_presuntivo    String?   @db.Text
+  diagnostico_definitivo    String?   @db.Text
+  indicacion_terapeutica    String    @db.Text
+  tratamiento_farmacologico String?   @db.Text
+  plan_cuidados             String?   @db.Text
+  recomendaciones           String?   @db.Text
+  pronostico                String?   @db.VarChar(255)
+  consultas                 consultas @relation(fields: [consulta_id], references: [consulta_id], onDelete: Cascade)
+
+  @@index([consulta_id], map: "diagnosticos_consulta_id_fkey")
+}
+
+model historias_clinicas {
+  historia_id           Int                                  @id @default(autoincrement())
+  paciente_id           Int                                  @unique
+  grupo_sanguineo       String?                              @db.VarChar(5)
+  estado_civil          String?                              @db.VarChar(50)
+  ocupacion             String?                              @db.VarChar(120)
+  enfermedades_infancia String?                              @db.Text
+  enfermedades_cronicas String?                              @db.Text
+  cirugias              String?                              @db.Text
+  alergias              String?                              @db.Text
+  hospitalizaciones     String?                              @db.Text
+  traumatismos          String?                              @db.Text
+  medicamentos_actuales String?                              @db.Text
+  consume_tabaco        Boolean                              @default(false)
+  consume_alcohol       Boolean                              @default(false)
+  otras_sustancias      String?                              @db.VarChar(255)
+  dieta_ok              Boolean                              @default(false)
+  actividad_fisica      historias_clinicas_actividad_fisica?
+  habitos_sueno         historias_clinicas_habitos_sueno?
+  medico_cabecera_id    Int?
+  sexo                  String?                              @db.VarChar(20)
+  consultas             consultas[]
+  profesionales         profesionales?                       @relation(fields: [medico_cabecera_id], references: [profesional_id])
+  pacientes             pacientes                            @relation(fields: [paciente_id], references: [paciente_id])
+
+  @@index([medico_cabecera_id], map: "historias_clinicas_medico_cabecera_id_fkey")
+}
+
+model obras_sociales {
+  obra_social_id Int                   @id @default(autoincrement())
+  nombre         String                @unique(map: "nombre") @db.VarChar(120)
+  estado         obras_sociales_estado @default(activa)
+  pacientes      pacientes[]
+  turnos         turnos[]
+}
+
 model pacientes {
-  nombre           String            @db.VarChar(120)
-  apellido         String            @db.VarChar(120)
-  email            String?           @unique(map: "email") @db.VarChar(120)
-  telefono         String?           @db.VarChar(40)
-  documento        String?           @unique(map: "documento") @db.VarChar(40)
-  estado           pacientes_estado  @default(activo)
-  fecha_nacimiento DateTime?         @db.Date
-  fecha_registro   DateTime?         @db.DateTime(0)
-  genero           pacientes_genero?
-  obra_social_id   Int?
-  paciente_id      Int               @id @default(autoincrement())
-  historia_clinica HistoriaClinica?
-  obras_sociales   obras_sociales?   @relation(fields: [obra_social_id], references: [obra_social_id], map: "fk_paciente_os")
-  turnos           turnos[]
+  nombre             String              @db.VarChar(120)
+  apellido           String              @db.VarChar(120)
+  email              String?             @unique(map: "email") @db.VarChar(120)
+  telefono           String?             @db.VarChar(40)
+  documento          String?             @unique(map: "documento") @db.VarChar(40)
+  estado             pacientes_estado    @default(activo)
+  fecha_nacimiento   DateTime?           @db.Date
+  fecha_registro     DateTime?           @db.DateTime(0)
+  genero             pacientes_genero?
+  obra_social_id     Int?
+  paciente_id        Int                 @id @default(autoincrement())
+  historias_clinicas historias_clinicas?
+  obras_sociales     obras_sociales?     @relation(fields: [obra_social_id], references: [obra_social_id], map: "fk_paciente_os")
+  turnos             turnos[]
 
   @@index([obra_social_id], map: "fk_paciente_os")
 }
 
 model profesionales {
-  estado                  profesionales_estado @default(activo)
-  matricula               String?              @db.VarChar(60)
-  profesion_id            Int
-  profesional_id          Int                  @id @default(autoincrement())
-  usuario_id              Int                  @unique(map: "usuario_id")
-  agenda_semanal          agenda_semanal[]
-  consultas               Consulta[]
-  historias_como_cabecera HistoriaClinica[]    @relation("MedicoCabecera")
-  profesiones             profesiones          @relation(fields: [profesion_id], references: [profesion_id], onUpdate: Restrict, map: "fk_prof_profesion")
-  usuarios                usuarios             @relation(fields: [usuario_id], references: [usuario_id], map: "fk_prof_usuario")
-  turnos                  turnos[]
+  estado             profesionales_estado @default(activo)
+  matricula          String?              @db.VarChar(60)
+  profesion_id       Int
+  profesional_id     Int                  @id @default(autoincrement())
+  usuario_id         Int                  @unique(map: "usuario_id")
+  agenda_semanal     agenda_semanal[]
+  consultas          consultas[]
+  historias_clinicas historias_clinicas[]
+  profesiones        profesiones          @relation(fields: [profesion_id], references: [profesion_id], onUpdate: Restrict, map: "fk_prof_profesion")
+  usuarios           usuarios             @relation(fields: [usuario_id], references: [usuario_id], map: "fk_prof_usuario")
+  turnos             turnos[]
 
   @@index([profesion_id], map: "ix_prof_profesion")
+}
+
+model profesiones {
+  profesion_id  Int             @id @default(autoincrement())
+  nombre        String          @unique(map: "nombre") @db.VarChar(80)
+  profesionales profesionales[]
+}
+
+model pruebas_complementarias {
+  prueba_id   Int                                 @id @default(autoincrement())
+  consulta_id Int
+  tipo_prueba pruebas_complementarias_tipo_prueba @default(laboratorio)
+  descripcion String                              @db.VarChar(255)
+  url_archivo String                              @db.VarChar(512)
+  consultas   consultas                           @relation(fields: [consulta_id], references: [consulta_id], onDelete: Cascade)
+
+  @@index([consulta_id], map: "pruebas_complementarias_consulta_id_fkey")
+}
+
+model roles {
+  rol_id   Int        @id @default(autoincrement())
+  nombre   String     @unique(map: "nombre") @db.VarChar(40)
+  usuarios usuarios[]
 }
 
 model turnos {
@@ -61,40 +177,6 @@ model turnos {
   @@index([profesional_id, inicio], map: "ix_turnos_prof_inicio")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model agenda_semanal {
-  agenda_id      Int                   @id @default(autoincrement())
-  profesional_id Int
-  dia_semana     Int                   @db.TinyInt
-  hora_inicio    DateTime              @db.Time(0)
-  hora_fin       DateTime              @db.Time(0)
-  slot_min       Int                   @db.SmallInt
-  estado         agenda_semanal_estado @default(activo)
-  profesionales  profesionales         @relation(fields: [profesional_id], references: [profesional_id], onDelete: Cascade, map: "fk_agenda_prof")
-
-  @@unique([profesional_id, dia_semana, hora_inicio, hora_fin], map: "uq_agenda")
-}
-
-model obras_sociales {
-  obra_social_id Int                   @id @default(autoincrement())
-  nombre         String                @unique(map: "nombre") @db.VarChar(120)
-  estado         obras_sociales_estado @default(activa)
-  pacientes      pacientes[]
-  turnos         turnos[]
-}
-
-model profesiones {
-  profesion_id  Int             @id @default(autoincrement())
-  nombre        String          @unique(map: "nombre") @db.VarChar(80)
-  profesionales profesionales[]
-}
-
-model roles {
-  rol_id   Int        @id @default(autoincrement())
-  nombre   String     @unique(map: "nombre") @db.VarChar(40)
-  usuarios usuarios[]
-}
-
 model usuarios {
   usuario_id    Int             @id @default(autoincrement())
   nombre        String          @db.VarChar(120)
@@ -110,91 +192,9 @@ model usuarios {
   @@index([rol_id], map: "fk_usuarios_rol")
 }
 
-model HistoriaClinica {
-  historia_id           Int             @id @default(autoincrement())
-  paciente_id           Int             @unique
-  grupo_sanguineo       String?         @db.VarChar(5)
-  estado_civil          String?         @db.VarChar(50)
-  ocupacion             String?         @db.VarChar(120)
-  enfermedades_infancia String?         @db.Text
-  enfermedades_cronicas String?         @db.Text
-  cirugias              String?         @db.Text
-  alergias              String?         @db.Text
-  hospitalizaciones     String?         @db.Text
-  traumatismos          String?         @db.Text
-  medicamentos_actuales String?         @db.Text
-  consume_tabaco        Boolean         @default(false)
-  consume_alcohol       Boolean         @default(false)
-  otras_sustancias      String?         @db.VarChar(255)
-  dieta_ok              Boolean         @default(false)
-  actividad_fisica      NivelActividad?
-  habitos_sueno         HabitosSueno?
-  medico_cabecera_id    Int?
-  sexo                  String?         @db.VarChar(20)
-  consultas             Consulta[]
-  medico_cabecera       profesionales?  @relation("MedicoCabecera", fields: [medico_cabecera_id], references: [profesional_id])
-  pacientes             pacientes       @relation(fields: [paciente_id], references: [paciente_id])
-
-  @@index([medico_cabecera_id], map: "historias_clinicas_medico_cabecera_id_fkey")
-  @@map("historias_clinicas")
-}
-
-model Consulta {
-  consulta_id              Int                    @id @default(autoincrement())
-  historia_id              Int
-  profesional_id           Int
-  fecha_consulta           DateTime               @default(now()) @db.DateTime(0)
-  motivo_consulta          String                 @db.Text
-  enfermedad_actual        String?                @db.Text
-  pa_sistolica             Int?
-  pa_diastolica            Int?
-  frecuencia_cardiaca      Int?
-  frecuencia_respiratoria  Int?
-  temperatura              Decimal?               @db.Decimal(4, 2)
-  peso                     Decimal?               @db.Decimal(5, 2)
-  altura                   Decimal?               @db.Decimal(3, 2)
-  imc                      Decimal?               @db.Decimal(4, 2)
-  notas_evolucion          String?                @db.Text
-  nota_referencia          String?                @db.Text
-  consentimiento_informado Boolean                @default(false)
-  historia                 HistoriaClinica        @relation(fields: [historia_id], references: [historia_id])
-  profesional              profesionales          @relation(fields: [profesional_id], references: [profesional_id])
-  diagnosticos             Diagnostico[]
-  pruebas_complementarias  PruebaComplementaria[]
-
-  @@index([historia_id], map: "consultas_historia_id_fkey")
-  @@index([profesional_id], map: "consultas_profesional_id_fkey")
-  @@map("consultas")
-}
-
-model Diagnostico {
-  diagnostico_id            Int      @id @default(autoincrement())
-  consulta_id               Int
-  fecha_diagnostico         DateTime @default(now()) @db.DateTime(0)
-  juicio_clinico            String?  @db.Text
-  diagnostico_presuntivo    String?  @db.Text
-  diagnostico_definitivo    String?  @db.Text
-  indicacion_terapeutica    String   @db.Text
-  tratamiento_farmacologico String?  @db.Text
-  plan_cuidados             String?  @db.Text
-  recomendaciones           String?  @db.Text
-  pronostico                String?  @db.VarChar(255)
-  consulta                  Consulta @relation(fields: [consulta_id], references: [consulta_id], onDelete: Cascade)
-
-  @@index([consulta_id], map: "diagnosticos_consulta_id_fkey")
-  @@map("diagnosticos")
-}
-
-model PruebaComplementaria {
-  prueba_id   Int        @id @default(autoincrement())
-  consulta_id Int
-  tipo_prueba TipoPrueba @default(laboratorio)
-  descripcion String     @db.VarChar(255)
-  url_archivo String     @db.VarChar(512)
-  consulta    Consulta   @relation(fields: [consulta_id], references: [consulta_id], onDelete: Cascade)
-
-  @@index([consulta_id], map: "pruebas_complementarias_consulta_id_fkey")
-  @@map("pruebas_complementarias")
+enum profesionales_estado {
+  activo
+  inactivo
 }
 
 enum obras_sociales_estado {
@@ -202,9 +202,24 @@ enum obras_sociales_estado {
   inactiva
 }
 
-enum profesionales_estado {
+enum pruebas_complementarias_tipo_prueba {
+  laboratorio
+  imagen
+  otro_estudio
+}
+
+enum pacientes_estado {
   activo
   inactivo
+}
+
+enum turnos_estado {
+  reservado
+  recepcionado
+  en_consulta
+  atendido
+  ausente
+  cancelado
 }
 
 enum agenda_semanal_estado {
@@ -217,41 +232,21 @@ enum usuarios_estado {
   inactivo
 }
 
-enum pacientes_estado {
-  activo
-  inactivo
-}
-
 enum pacientes_genero {
   Mujer
   Hombre
   otro
 }
 
-enum NivelActividad {
+enum historias_clinicas_actividad_fisica {
   sedentario
   ligera
   moderada
   intensa
 }
 
-enum HabitosSueno {
+enum historias_clinicas_habitos_sueno {
   insuficiente
   normal
   excesivo
-}
-
-enum TipoPrueba {
-  laboratorio
-  imagen
-  otro_estudio
-}
-
-enum turnos_estado {
-  reservado
-  recepcionado
-  en_consulta
-  atendido
-  ausente
-  cancelado
 }

@@ -1,24 +1,24 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import type { NivelActividad } from '@prisma/client';
+import type { historias_clinicas_actividad_fisica } from '@prisma/client';
 
 type RouteContext = {
-    params: Promise<{ paciente_id: string }>;
+  params: Promise<{ paciente_id: string }>;
 };
 
 interface AntecedentesUpdateBody {
-    sexo?: string | null;
-    grupo_sanguineo?: string | null;
-    estado_civil?: string | null;
-    ocupacion?: string | null;
-    enfermedades_infancia?: string | null;
-    enfermedades_cronicas?: string | null;
-    cirugias?: string | null;
-    alergias?: string | null;
-    medicamentos_actuales?: string | null;
-    consume_tabaco?: boolean;
-    consume_alcohol?: boolean;
-    actividad_fisica?: NivelActividad | null; 
+  sexo?: string | null;
+  grupo_sanguineo?: string | null;
+  estado_civil?: string | null;
+  ocupacion?: string | null;
+  enfermedades_infancia?: string | null;
+  enfermedades_cronicas?: string | null;
+  cirugias?: string | null;
+  alergias?: string | null;
+  medicamentos_actuales?: string | null;
+  consume_tabaco?: boolean;
+  consume_alcohol?: boolean;
+  actividad_fisica?: historias_clinicas_actividad_fisica | null;
 }
 
 /**
@@ -26,80 +26,80 @@ interface AntecedentesUpdateBody {
  * URL: /api/historiaclinica/[paciente_id]
  */
 export async function GET(request: NextRequest, context: RouteContext) {
-    const { paciente_id } = await context.params;
-    const pacienteId = parseInt(paciente_id, 10); 
+  const { paciente_id } = await context.params;
+  const pacienteId = parseInt(paciente_id, 10);
 
-    if (isNaN(pacienteId)) {
-        return NextResponse.json({ error: 'ID de paciente inválido' }, { status: 400 });
-    }
+  if (isNaN(pacienteId)) {
+    return NextResponse.json({ error: 'ID de paciente inválido' }, { status: 400 });
+  }
 
-    try {
-        const historiaClinica = await prisma.historiaClinica.findUnique({
-            where: { paciente_id: pacienteId },
-            include: {
-                pacientes: {
-                    select: {
-                        nombre: true,
-                        apellido: true,
-                        documento: true,
-                        fecha_nacimiento: true,
-                        genero: true,
-                        email: true,
-                        telefono: true
-                    }
-                },
-                medico_cabecera: {
-                    include: {
-                        usuarios: {
-                            select: {
-                                nombre: true,
-                                apellido: true,
-                                email: true
-                            }
-                        }
-                    }
-                },
-                consultas: {
-                    orderBy: { fecha_consulta: 'desc' }, 
-                    include: {
-                        diagnosticos: true,
-                        historia: {
-                            select: {
-                                paciente_id: true
-                            }
-                        },
-                        profesional: { 
-                            select: { 
-                                profesional_id: true,
-                                usuarios: {
-                                    select: {
-                                        nombre: true, 
-                                        apellido: true,
-                                    }
-                                }
-                            }
-                        }
-                    },
-                },
+  try {
+    const historiaClinica = await prisma.historias_clinicas.findUnique({
+      where: { paciente_id: pacienteId },
+      include: {
+        pacientes: {
+          select: {
+            nombre: true,
+            apellido: true,
+            documento: true,
+            fecha_nacimiento: true,
+            genero: true,
+            email: true,
+            telefono: true,
+          },
+        },
+        profesionales: { // médico cabecera
+          include: {
+            usuarios: {
+              select: {
+                nombre: true,
+                apellido: true,
+                email: true,
+              },
             },
-        });
+          },
+        },
+        consultas: {
+          orderBy: { fecha_consulta: 'desc' },
+          include: {
+            diagnosticos: true,
+            historias_clinicas: { // relación correcta
+              select: {
+                paciente_id: true,
+              },
+            },
+            profesionales: { // relación correcta
+              select: {
+                profesional_id: true,
+                usuarios: {
+                  select: {
+                    nombre: true,
+                    apellido: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
 
-        if (!historiaClinica) {
-            return NextResponse.json(
-                { error: 'Historia Clínica no encontrada para este paciente.' }, 
-                { status: 404 }
-            );
-        }
-
-        return NextResponse.json(historiaClinica);
-
-    } catch (error) {
-        console.error('Error en GET HC:', error);
-        return NextResponse.json(
-            { error: 'Error al obtener la Historia Clínica.' }, 
-            { status: 500 }
-        );
+    if (!historiaClinica) {
+      return NextResponse.json(
+        { error: 'Historia Clínica no encontrada para este paciente.' },
+        { status: 404 }
+      );
     }
+
+    return NextResponse.json(historiaClinica);
+
+  } catch (error) {
+    console.error('Error en GET HC:', error);
+    return NextResponse.json(
+      { error: 'Error al obtener la Historia Clínica.' },
+      { status: 500 }
+    );
+  }
 }
 
 /**
@@ -120,9 +120,9 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
         // TODO: Obtener profesional_id del usuario autenticado
         // Por ahora usamos un ID hardcodeado (TEMPORAL)
-        const profesionalActual = 8; // CAMBIAR cuando tengas autenticación
+        const profesionalActual = 9; // CAMBIAR cuando tengas autenticación
 
-        const historia = await prisma.historiaClinica.findUnique({
+        const historia = await prisma.historias_clinicas.findUnique({
             where: { paciente_id: pacienteId },
             select: { 
                 historia_id: true,
@@ -145,7 +145,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
             );
         }
 
-        const historiaActualizada = await prisma.historiaClinica.update({
+        const historiaActualizada = await prisma.historias_clinicas.update({
             where: { historia_id: historia.historia_id },
             data: {
                 sexo: body.sexo,
