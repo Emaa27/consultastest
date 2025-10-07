@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { error } from "console";
 
 export async function GET(req: Request) {
   try {
@@ -24,27 +25,33 @@ export async function GET(req: Request) {
       const inicio = new Date(`${fecha}T00:00:00`);
       const fin = new Date(`${fecha}T23:59:59.999`);
       where.inicio = { gte: inicio, lte: fin };
+    } else {
+      return NextResponse.json(
+        { error: "Debe especificar una fecha" },
+        { status: 400 }
+      )
     }
 
     // Consulta a la base de datos con Prisma
     const turnos = await prisma.turnos.findMany({
       where,
       include: {
-        pacientes: true, // datos del paciente
+        pacientes: { include: { obras_sociales: true } }, // datos del paciente (con obra social)
         profesionales: { include: { usuarios: true } }, // datos del profesional y su usuario
-        obras_sociales: true, // obra social asociada
       },
       orderBy: { inicio: "asc" }, // ordenar cronológicamente
     });
 
-    // Convertir BigInt → String para evitar problemas con JSON
-    const serialized = turnos.map((t) => ({
-      ...t,
-      turno_id: t.turno_id.toString(),
-    }));
+    const dia_semana = new Date(`${fecha}T00:00:00`).getDay(); // (Domingo-Sábado : 0-6)
+    const agenda = await prisma.agenda_semanal.findMany({
+      where: {
+        profesional_id: Number(profesionalId),
+        dia_semana: dia_semana,
+      },
+    });
 
     // Respuesta exitosa
-    return NextResponse.json(serialized);
+    return NextResponse.json({"turnos": turnos, "agenda": agenda});
   } catch (error) {
     console.error("Error obteniendo turnos:", error);
     return NextResponse.json(

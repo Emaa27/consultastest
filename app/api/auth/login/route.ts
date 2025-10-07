@@ -24,6 +24,8 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    console.log(usuario);
+
     if (!usuario) {
       return NextResponse.json(
         { success: false, message: 'Usuario no encontrado' },
