@@ -7,12 +7,12 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const profesional_id = Number(searchParams.get("profesional_id"));
     const dia_semana = Number(searchParams.get("dia_semana"));
-  const agenda = await prisma.agenda_semanal.findFirst({
+  const agendas = await prisma.agenda_semanal.findMany({
         where: {
             profesional_id: profesional_id,
             dia_semana: dia_semana,
         },
   });
 
-  return NextResponse.json(agenda);
+  return NextResponse.json(agendas);
 }
