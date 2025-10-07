@@ -16,9 +16,9 @@ type TurnoDetalle = {
   pacientes: {
     nombre: string;
     apellido: string;
-    dni?: string | null;
+    documento?: string | null;
     telefono?: string | null;
-    obras_sociales?: { id: number; nombre: string } | null; // ← nombre obra social
+    obras_sociales?: { nombre: string } | null;
   };
 };
 
@@ -26,12 +26,32 @@ type Props = {
   turnoId: number | null;
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  onUpdate?: () => void;
 };
+// Ícono (puedes ponerlo junto a tus otros SVGs)
+const Pencil = ({ className }: { className?: string }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M12 20H5a1 1 0 0 1-1-1v-7" />
+    <path d="m16.5 3.5 4 4L9 19l-5 1 1-5 11.5-11.5Z" />
+  </svg>
+);
 
-export default function TurnoDetalleModal({ turnoId, open, onOpenChange }: Props) {
+export default function TurnoDetalleModal({ turnoId, open, onOpenChange, onUpdate }: Props) {
   const [data, setData] = React.useState<TurnoDetalle | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [err, setErr] = React.useState<string | null>(null);
+  const [updating, setUpdating] = React.useState(false);
+  const [editingEstado, setEditingEstado] = React.useState(false);
+  const [nuevoEstado, setNuevoEstado] = React.useState<string>("");
 
   React.useEffect(() => {
     let active = true;
@@ -90,7 +110,44 @@ export default function TurnoDetalleModal({ turnoId, open, onOpenChange }: Props
             <section className="grid grid-cols-2 gap-2">
               <div>
                 <p className="text-neutral-500">Estado</p>
-                <p className="font-medium capitalize">{data.estado.replace("_", " ")}</p>
+                {!editingEstado ? (
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium capitalize">
+                        {data.estado.replace("_", " ")}
+                    </p>
+
+                    <button
+                        onClick={() => {
+                        setEditingEstado(true);
+                        setNuevoEstado(data.estado);
+                        }}
+                        className="p-1 rounded text-blue-600 hover:text-blue-800 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                        aria-label="Editar estado"
+                        title="Editar estado"
+                        type="button"
+                    >
+                        <Pencil className="w-4 h-4" />
+                    </button>
+                    </div>
+
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={nuevoEstado}
+                      onChange={(e) => setNuevoEstado(e.target.value)}
+                      className="text-sm border border-neutral-300 rounded px-2 py-1"
+                    >
+                      <option value="recepcionado">Recepcionado</option>
+                      <option value="cancelado">Cancelado</option>
+                    </select>
+                    <button
+                      onClick={() => setEditingEstado(false)}
+                      className="text-xs text-neutral-600 hover:text-neutral-800"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
               </div>
               <div>
                 <p className="text-neutral-500">Profesional</p>
@@ -126,7 +183,7 @@ export default function TurnoDetalleModal({ turnoId, open, onOpenChange }: Props
               </div>
               <div>
                 <p className="text-neutral-500">DNI</p>
-                <p className="font-medium">{data.pacientes.dni ?? "—"}</p>
+                <p className="font-medium">{data.pacientes.documento ?? "—"}</p>
               </div>
               <div>
                 <p className="text-neutral-500">Teléfono</p>
@@ -140,8 +197,38 @@ export default function TurnoDetalleModal({ turnoId, open, onOpenChange }: Props
               </div>
             </section>
 
-            {/* Aquí puedes agregar acciones: reprogramar, marcar estado, cancelar, etc. */}
             <div className="pt-2 flex gap-2 justify-end">
+              {editingEstado && (
+                <button
+                  onClick={async () => {
+                    if (!turnoId || nuevoEstado === data.estado) {
+                      setEditingEstado(false);
+                      return;
+                    }
+                    setUpdating(true);
+                    try {
+                      const res = await fetch(`/api/turnos/detalle/${turnoId}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ estado: nuevoEstado }),
+                      });
+                      if (!res.ok) throw new Error("Error al actualizar");
+                      const updated = await res.json();
+                      setData(updated);
+                      setEditingEstado(false);
+                      onUpdate?.();
+                    } catch (e) {
+                      setErr("No se pudo actualizar el estado");
+                    } finally {
+                      setUpdating(false);
+                    }
+                  }}
+                  disabled={updating}
+                  className="rounded-lg px-3 py-1.5 text-sm bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {updating ? "Guardando..." : "Guardar"}
+                </button>
+              )}
               <button
                 onClick={() => onOpenChange(false)}
                 className="rounded-lg px-3 py-1.5 text-sm bg-neutral-100 hover:bg-neutral-200"

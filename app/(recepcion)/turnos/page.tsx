@@ -6,15 +6,27 @@ import { Plus } from "@/components/turnos/icons";
 import WeekNavigation from "@/components/turnos/WeekNavigation";
 import CalendarGrid from "@/components/turnos/CalendarGrid";
 import TurnoModal from "@/components/turnos/TurnoModal";
+import FiltrosModal from "@/components/turnos/FiltrosModal";
 import { useTurnos } from "@/hooks/useTurnos";
 import { getStartOfWeek, addDays, formatWeekRangeLabel } from "@/utils/turnos";
 
+type Filtros = {
+  profesional_id: number | null;
+  obra_social_id: number | null;
+  mostrarHistorico: boolean;
+};
+
 export default function TurnosPage() {
   const [isOpen, setIsOpen] = useState(false);
-  const [mostrarHistorico, setMostrarHistorico] = useState(false);
+  const [filtrosOpen, setFiltrosOpen] = useState(false);
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(() => getStartOfWeek(new Date()));
+  const [filtros, setFiltros] = useState<Filtros>({
+    profesional_id: null,
+    obra_social_id: null,
+    mostrarHistorico: false,
+  });
   
-  const { turnos, isLoadingTurnos, pacientes, profesionales, refetchTurnos } = useTurnos();
+  const { turnos, isLoadingTurnos, pacientes, profesionales, obrasSociales, refetchTurnos } = useTurnos();
 
   // Semana visible
   const daysOfWeek = Array.from({ length: 7 }, (_, i) => addDays(currentWeekStart, i));
@@ -44,37 +56,34 @@ export default function TurnosPage() {
         onTodayWeek={goTodayWeek}
       />
 
-      {/* Botón agregar turno */}
-      <button
-        className="px-6 py-3 bg-gradient-to-r from-[#6596d8] to-[#b5e4e6] text-white rounded-lg 
-               hover:from-[#2e75d4] hover:to-[#8ddee1] shadow-lg transform transition-all duration-200 
-               hover:scale-[1.02] active:scale-[0.98] font-semibold flex items-center gap-2"
-        onClick={() => setIsOpen(true)}
-      >
-        <Plus className="w-5 h-5" />
-        Agregar Nuevo Turno
-      </button>
-      
-      {/* Checkbox Mostrar Histórico */}
-      <div
-        className="inline-flex items-center gap-2 px-3 py-2 mb-6 
-                  bg-gradient-to-r from-[#f8fafc] to-[#eef6fb] 
-                  border border-gray-200 rounded-lg shadow-sm 
-                  hover:shadow-md transition-all duration-200"
-      >
-        <input
-          id="mostrarHistorico"
-          type="checkbox"
-          checked={mostrarHistorico}
-          onChange={(e) => setMostrarHistorico(e.target.checked)}
-          className="h-4 w-4 text-[#6596d8] border-gray-300 rounded focus:ring-[#6596d8] cursor-pointer"
-        />
-        <label
-          htmlFor="mostrarHistorico"
-          className="text-sm font-semibold text-gray-700 cursor-pointer select-none"
+      {/* Botones de acción */}
+      <div className="flex gap-3 mb-6">
+        <button
+          className="px-6 py-3 bg-gradient-to-r from-[#6596d8] to-[#b5e4e6] text-white rounded-lg 
+                 hover:from-[#2e75d4] hover:to-[#8ddee1] shadow-lg transform transition-all duration-200 
+                 hover:scale-[1.02] active:scale-[0.98] font-semibold flex items-center gap-2"
+          onClick={() => setIsOpen(true)}
         >
-          Histórico
-        </label>
+          <Plus className="w-5 h-5" />
+          Agregar Nuevo Turno
+        </button>
+
+        <button
+          className="px-6 py-3 bg-white border-2 border-[#6596d8] text-[#6596d8] rounded-lg 
+                 hover:bg-[#6596d8] hover:text-white shadow-lg transform transition-all duration-200 
+                 hover:scale-[1.02] active:scale-[0.98] font-semibold flex items-center gap-2"
+          onClick={() => setFiltrosOpen(true)}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+          </svg>
+          Filtros
+          {(filtros.profesional_id || filtros.obra_social_id || filtros.mostrarHistorico) && (
+            <span className="ml-1 px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">
+              {[filtros.profesional_id, filtros.obra_social_id, filtros.mostrarHistorico].filter(Boolean).length}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Calendario */}
@@ -89,17 +98,28 @@ export default function TurnosPage() {
         <CalendarGrid
           daysOfWeek={daysOfWeek}
           turnos={turnos}
-          mostrarHistorico={mostrarHistorico}
+          filtros={filtros}
+          onUpdate={refetchTurnos}
         />
       )}
 
-      {/* Modal */}
+      {/* Modal Turno */}
       <TurnoModal
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
         pacientes={pacientes}
         profesionales={profesionales}
         onTurnoGuardado={refetchTurnos}
+      />
+
+      {/* Modal Filtros */}
+      <FiltrosModal
+        open={filtrosOpen}
+        onOpenChange={setFiltrosOpen}
+        filtros={filtros}
+        onFiltrosChange={setFiltros}
+        profesionales={profesionales}
+        obrasSociales={obrasSociales}
       />
     </div>
   );

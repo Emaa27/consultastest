@@ -7,10 +7,13 @@ import { Turno } from "@/types/turnos";
 import { getColorByStatus } from "@/utils/turnos";
 import TurnoDetalleModal from "./TurnoDetalle";
 
-type Props = { turno: Turno };
+type Props = { 
+  turno: Turno;
+  onUpdate?: () => void;
+};
 const toDate = (d: string | Date | null) => (d ? new Date(d) : null);
 
-export default function TurnoCard({ turno }: Props) {
+export default function TurnoCard({ turno, onUpdate }: Props) {
   const inicio = toDate(turno.inicio)!;
   const fin = toDate(turno.fin) ?? new Date(inicio.getTime() + (turno.duracion_min ?? 0) * 60_000);
   const colorGradient = getColorByStatus(turno.estado);
@@ -52,6 +55,7 @@ export default function TurnoCard({ turno }: Props) {
         turnoId={Number(turno.turno_id)}
         open={open}
         onOpenChange={setOpen}
+        onUpdate={onUpdate}
       />
     </>
   );

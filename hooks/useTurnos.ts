@@ -4,11 +4,17 @@
 import { useState, useEffect } from "react";
 import { Turno, Paciente, Profesional } from "@/types/turnos";
 
+type ObraSocial = {
+  obra_social_id: number;
+  nombre: string;
+};
+
 export function useTurnos() {
   const [turnos, setTurnos] = useState<Turno[]>([]);
   const [isLoadingTurnos, setIsLoadingTurnos] = useState(true);
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [profesionales, setProfesionales] = useState<Profesional[]>([]);
+  const [obrasSociales, setObrasSociales] = useState<ObraSocial[]>([]);
 
   const cargarTurnos = async () => {
     setIsLoadingTurnos(true);
@@ -46,10 +52,21 @@ export function useTurnos() {
     }
   };
 
+  const cargarObrasSociales = async () => {
+    try {
+      const res = await fetch("/api/obras_sociales");
+      const data = await res.json();
+      setObrasSociales(data);
+    } catch (error) {
+      console.error("Error cargando obras sociales", error);
+    }
+  };
+
   useEffect(() => {
     cargarTurnos();
     cargarPacientes();
     cargarProfesionales();
+    cargarObrasSociales();
   }, []);
 
   return {
@@ -57,6 +74,7 @@ export function useTurnos() {
     isLoadingTurnos,
     pacientes,
     profesionales,
+    obrasSociales,
     refetchTurnos: cargarTurnos,
   };
 }

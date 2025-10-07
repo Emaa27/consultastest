@@ -9,35 +9,33 @@ interface DayColumnProps {
   day: Date;
   turnos: Turno[];
   isToday: boolean;
+  onUpdate?: () => void;
 }
 
-export default function DayColumn({ day, turnos, isToday }: DayColumnProps) {
+export default function DayColumn({ day, turnos, isToday, onUpdate }: DayColumnProps) {
   return (
     <div
       className={`border rounded-xl p-3 transition-all duration-200 ${
         isToday
-          ? "bg-gradient-to-br from-[#6596d8]/10 to-[#b5e4e6]/10 border-[#6596d8] shadow-lg"
-          : "bg-white hover:shadow-md border-gray-200"
+          ? "bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-300 shadow-md"
+          : "bg-white border-gray-200 hover:shadow-sm"
       }`}
     >
-      <div className="mb-3 text-center">
-        <h3 className={`font-bold ${isToday ? "text-[#6596d8]" : "text-gray-700"}`}>
-          {day.toLocaleDateString("es-AR", { weekday: "short" })}
-        </h3>
-        <p className={`text-2xl font-bold ${isToday ? "text-[#6596d8]" : "text-gray-800"}`}>
-          {day.getDate()}
+      <div className="mb-3 pb-2 border-b border-gray-200">
+        <p className="text-sm font-semibold text-gray-700">
+          {day.toLocaleDateString("es-AR", { weekday: "short" }).toUpperCase()}
         </p>
         <p className="text-xs text-gray-500">
-          {day.toLocaleDateString("es-AR", { month: "short" })}
+          {day.toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}
         </p>
       </div>
 
-      <div className="space-y-2 max-h-96 overflow-y-auto">
+      <div className="space-y-2">
         {turnos.length === 0 ? (
           <p className="text-gray-400 text-xs text-center py-4">Sin turnos</p>
         ) : (
           turnos.map((turno) => (
-            <TurnoCard key={turno.turno_id} turno={turno} />
+            <TurnoCard key={turno.turno_id} turno={turno} onUpdate={onUpdate} />
           ))
         )}
       </div>

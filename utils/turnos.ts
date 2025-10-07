@@ -27,12 +27,12 @@ export type EstadoTurno =
   | "cancelado";
 
 const estadoGradients: Record<EstadoTurno | "default", string> = {
-  reservado:    "from-sky-400 to-sky-500",
-  recepcionado: "from-indigo-400 to-indigo-500",
-  en_consulta:  "from-amber-400 to-orange-500",
-  atendido:     "from-emerald-400 to-green-500",
-  ausente:      "from-slate-400 to-gray-500",
-  cancelado:    "from-rose-400 to-red-500",
+  reservado:    "from-sky-500 to-sky-600",
+  recepcionado: "from-indigo-500 to-indigo-600",
+  en_consulta:  "from-amber-500 to-orange-600",
+  atendido:     "from-emerald-500 to-green-600",
+  ausente:      "from-slate-500 to-gray-600",
+  cancelado:    "from-gray-500 to-gray-600",
   default:      "from-gray-300 to-gray-400",
 };
 

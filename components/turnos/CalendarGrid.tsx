@@ -5,16 +5,24 @@ import React from "react";
 import DayColumn from "@/components/turnos/DayColumn";
 import { Turno } from "@/types/turnos";
 
+type Filtros = {
+  profesional_id: number | null;
+  obra_social_id: number | null;
+  mostrarHistorico: boolean;
+};
+
 interface CalendarGridProps {
   daysOfWeek: Date[];
   turnos: Turno[];
-  mostrarHistorico: boolean;
+  filtros: Filtros;
+  onUpdate?: () => void;
 }
 
 export default function CalendarGrid({
   daysOfWeek,
   turnos,
-  mostrarHistorico,
+  filtros,
+  onUpdate,
 }: CalendarGridProps) {
   const now = new Date();
   const startOfToday = new Date(now);
@@ -26,7 +34,7 @@ export default function CalendarGrid({
     a.getDate() === b.getDate();
 
   // (Opcional) cuando Histórico está OFF, ocultar columnas de días pasados
-  const visibleDays = mostrarHistorico
+  const visibleDays = filtros.mostrarHistorico
     ? daysOfWeek
     : daysOfWeek.filter((d) => d >= startOfToday || sameDay(d, startOfToday));
 
@@ -40,15 +48,25 @@ export default function CalendarGrid({
         // 1) el turno pertenece a la columna (mismo día)
         if (!sameDay(inicio, day)) return false;
 
-        // 2) si histórico está OFF → solo futuros respecto a "ahora"
-        if (!mostrarHistorico) {
+        // 2) Filtro por profesional
+        if (filtros.profesional_id && t.profesional_id !== filtros.profesional_id) {
+          return false;
+        }
+
+        // 3) Filtro por obra social
+        if (filtros.obra_social_id && t.obra_social_id !== filtros.obra_social_id) {
+          return false;
+        }
+
+        // 4) si histórico está OFF → solo futuros respecto a "ahora"
+        if (!filtros.mostrarHistorico) {
           // si es hoy, desde "ahora" en adelante; si es un día posterior, todos
           if (sameDay(day, now)) return inicio >= now;
           if (day > startOfToday) return true; // día futuro
           return false; // día pasado (no mostrar)
         }
 
-        // 3) histórico ON → sin filtro temporal
+        // 5) histórico ON → sin filtro temporal
         return true;
       })
       .sort(
@@ -69,6 +87,7 @@ export default function CalendarGrid({
             day={day}
             turnos={turnosDelDia}
             isToday={isToday}
+            onUpdate={onUpdate}
           />
         );
       })}
