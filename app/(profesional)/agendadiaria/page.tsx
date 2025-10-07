@@ -77,13 +77,12 @@ type Turno = {
   };
 };
 
-// ⚠️ Alinear con lo que devuelve tu login: id, nombre (completo), email, rol, profesionalId
 type UserData = {
   id: number;
-  nombre: string;    // viene "Nombre Apellido" ya concatenado desde el login
+  nombre: string;
   email: string;
-  rol: string;       // "Profesional" | ...
-  profesionalId?: number; // <-- camelCase como en tu payload
+  rol: string;
+  profesionalId?: number;
 };
 
 type Agenda = {
@@ -102,22 +101,34 @@ function formatearFecha(fechaStr: string) {
     year: "numeric",
   });
 }
+
 function formatearHora(fechaStr: string) {
   const fecha = new Date(fechaStr);
   return fecha.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
 }
-const getEstadoColor = (estado: EstadoTurno, ocupado: boolean) => {
-  if (!ocupado) return "from-gray-400 to-gray-500";
-  const colors: Record<string, string> = {
-    reservado: "from-yellow-400 to-yellow-500",
-    recepcionado: "from-blue-400 to-blue-500",
-    en_consulta: "from-purple-400 to-purple-500",
-    atendido: "from-green-400 to-green-500",
-    ausente: "from-gray-400 to-gray-500",
-    cancelado: "from-red-400 to-red-500",
+
+// Función mejorada para extraer hora:minutos de un timestamp
+function extraerHoraMinutos(timestampStr: string): { hora: number; minutos: number } {
+  const fecha = new Date(timestampStr);
+  return {
+    hora: fecha.getUTCHours(), // Usar UTC porque los timestamps vienen en UTC
+    minutos: fecha.getUTCMinutes()
   };
-  return colors[estado] || "from-orange-400 to-yellow-400";
+}
+
+const getEstadoColor = (estado: EstadoTurno, ocupado: boolean) => {
+  if (!ocupado) return "from-emerald-400 to-emerald-500"; // Disponible - verde más claro
+  const colors: Record<string, string> = {
+    reservado: "from-sky-500 to-sky-600",
+    recepcionado: "from-indigo-500 to-indigo-600",
+    en_consulta: "from-amber-500 to-orange-600",
+    atendido: "from-emerald-600 to-green-700", // Atendido - verde más oscuro
+    ausente: "from-slate-500 to-gray-600",
+    cancelado: "from-gray-500 to-gray-600",
+  };
+  return colors[estado] || "from-gray-300 to-gray-400";
 };
+
 const getEstadoLabel = (estado: EstadoTurno) => {
   const labels: Record<string, string> = {
     disponible: "Disponible",
@@ -131,10 +142,10 @@ const getEstadoLabel = (estado: EstadoTurno) => {
   return labels[estado] || estado;
 };
 
-// Definición dinámica de los rangos horarios
+// Bloques horarios basados en tu agenda: 8-12 y 14-18
 const bloquesHorarios = [
-  { label: "Mañana", inicio: 8, fin: 13 },
-  { label: "Tarde", inicio: 13, fin: 19 },
+  { label: "Mañana", inicio: 8, fin: 12 },
+  { label: "Tarde", inicio: 14, fin: 18 },
 ];
 
 // ── Componente ────────────────────────────────────────────────────────────────
@@ -149,7 +160,6 @@ export default function AgendaDiariaPage() {
   const [fechaActual, setFechaActual] = useState<string>(() => {
     return searchParams.get("fecha") || new Date().toISOString().split("T")[0];
   });
-  // inicializo a "todos" para que coincida con la lógica de filtros y la URL
   const [filtroTurno, setFiltroTurno] = useState<string>("todos");
   const [filtroEstado, setFiltroEstado] = useState<"todos" | "ocupados" | "libres">(
     (searchParams.get("estado") as "todos" | "ocupados" | "libres") || "todos"
@@ -167,7 +177,7 @@ export default function AgendaDiariaPage() {
     try {
       const u = JSON.parse(stored) as UserData;
       setUserData(u);
-      if (u.profesionalId) setProfesionalId(u.profesionalId); // <-- clave corregida
+      if (u.profesionalId) setProfesionalId(u.profesionalId);
     } catch {
       // ignorar parse error
     }
@@ -179,7 +189,7 @@ export default function AgendaDiariaPage() {
 
     setIsLoadingTurnos(true);
     const qs = new URLSearchParams({
-      profesional_id: String(profesionalId), // <-- param que espera tu API
+      profesional_id: String(profesionalId),
       fecha: fechaActual,
     });
     if (filtroTurno !== "todos") qs.set("horario", filtroTurno);
@@ -189,25 +199,30 @@ export default function AgendaDiariaPage() {
     .then((r) => r.json())
     .then((data) => {
       const turnosReales = Array.isArray(data.turnos) ? data.turnos : [];
-      console.log("turnosReales", turnosReales);
       const agenda = Array.isArray(data.agenda) ? data.agenda : [];
+      
+      console.log("Agenda recibida:", agenda);
+      console.log("Turnos reales:", turnosReales);
 
       // Genero todos los posibles turnos vacíos en base a la agenda
       const turnosGenerados: Turno[] = [];
 
-      agenda.forEach((ag: { hora_inicio: any; hora_fin: any; slot_min: any; }) => {
-        // Para construir la fecha base tomo la fechaActual y agrego horas/minutos desde ag.hora_inicio
-        // ag.hora_inicio puede venir como "1970-01-01T08:00:00.000Z" o similar
-        const horaInicioPart = ag.hora_inicio.split("T")[1] ?? ag.hora_inicio;
-        const horaFinPart = ag.hora_fin.split("T")[1] ?? ag.hora_fin;
+      agenda.forEach((ag: Agenda) => {
+        // Extraer hora y minutos de los timestamps
+        const horaInicio = extraerHoraMinutos(ag.hora_inicio);
+        const horaFin = extraerHoraMinutos(ag.hora_fin);
+        const duracion = Number(ag.slot_min) || 30; // default 30 min si no hay slot_min
 
-        const fechaBase = new Date(`${fechaActual}T${horaInicioPart}`);
-        const finAgenda = new Date(`${fechaActual}T${horaFinPart}`);
-        const duracion = Number(ag.slot_min);
+        // Crear fechas para el día actual con las horas extraídas
+        const fechaBase = new Date(`${fechaActual}T00:00:00`);
+        fechaBase.setHours(horaInicio.hora, horaInicio.minutos, 0, 0);
+        
+        const finAgenda = new Date(`${fechaActual}T00:00:00`);
+        finAgenda.setHours(horaFin.hora, horaFin.minutos, 0, 0);
 
-        // si algo de lo anterior falla, evitamos loop infinito
-        if (isNaN(fechaBase.getTime()) || isNaN(finAgenda.getTime()) || !duracion) return;
+        console.log(`Generando turnos desde ${fechaBase.toISOString()} hasta ${finAgenda.toISOString()}`);
 
+        // Generar turnos cada 'duracion' minutos
         const cursor = new Date(fechaBase);
         while (cursor < finAgenda) {
           const inicioStr = cursor.toISOString();
@@ -215,8 +230,11 @@ export default function AgendaDiariaPage() {
           finSlot.setMinutes(finSlot.getMinutes() + duracion);
           const finStr = finSlot.toISOString();
 
+          // Generar un ID único para el turno vacío
+          const turnoId = cursor.getHours() * 10000 + cursor.getMinutes() * 100 + Math.floor(Math.random() * 100);
+
           turnosGenerados.push({
-            turno_id: Number(cursor.getHours().toString().padStart(2, "0") + cursor.getMinutes().toString().padStart(2, "0")),
+            turno_id: turnoId,
             inicio: inicioStr,
             fin: finStr,
             estado: "disponible",
@@ -228,6 +246,8 @@ export default function AgendaDiariaPage() {
         }
       });
 
+      console.log("Turnos generados:", turnosGenerados.length);
+
       // Combino turnos generados con los reales (ocupados reemplazan los vacíos)
       const turnosCombinados = turnosGenerados.map((t) => {
         const real = turnosReales.find((r: any) => {
@@ -237,25 +257,36 @@ export default function AgendaDiariaPage() {
         });
 
         if (real) {
-          // Si el turno real no tiene 'fin', lo calculo con duracion_min si existe
-          if (!real.fin) {
-            if (real.duracion_min) {
-              const inicio = new Date(real.inicio);
-              const fin = new Date(inicio);
-              fin.setMinutes(inicio.getMinutes() + Number(real.duracion_min));
-              real.fin = fin.toISOString();
-            } else {
-              // fallback: 30 min
-              const inicio = new Date(real.inicio);
-              const fin = new Date(inicio);
-              fin.setMinutes(inicio.getMinutes() + 30);
-              real.fin = fin.toISOString();
-            }
+          // Si el turno real no tiene 'fin', lo calculo
+          if (!real.fin && real.duracion_min) {
+            const inicio = new Date(real.inicio);
+            const fin = new Date(inicio);
+            fin.setMinutes(inicio.getMinutes() + Number(real.duracion_min));
+            real.fin = fin.toISOString();
           }
           return real;
         }
         return t;
       });
+
+      // También agregar turnos reales que no coincidan con ningún generado
+      turnosReales.forEach((real: any) => {
+        const yaExiste = turnosCombinados.some(t => t.turno_id === real.turno_id);
+        if (!yaExiste) {
+          if (!real.fin && real.duracion_min) {
+            const inicio = new Date(real.inicio);
+            const fin = new Date(inicio);
+            fin.setMinutes(inicio.getMinutes() + Number(real.duracion_min));
+            real.fin = fin.toISOString();
+          }
+          turnosCombinados.push(real);
+        }
+      });
+
+      // Ordenar por hora de inicio
+      turnosCombinados.sort((a, b) => 
+        new Date(a.inicio).getTime() - new Date(b.inicio).getTime()
+      );
 
       setTurnos(turnosCombinados);
     })
@@ -288,10 +319,8 @@ export default function AgendaDiariaPage() {
   let turnosFiltrados = turnos.filter((t) => {
     const h = new Date(t.inicio).getHours();
 
-    // Si no hay filtro seleccionado → mostrar todos
     if (!filtroTurno || filtroTurno === "todos") return true;
 
-    // Buscar bloque según el filtro
     const bloque = bloquesHorarios.find((b) => b.label === filtroTurno);
     if (!bloque) return true;
 
@@ -309,7 +338,6 @@ export default function AgendaDiariaPage() {
   const turnosLibres = totalTurnos - turnosOcupados;
 
   return (
-    //cambio aquí
     <main className="p-6">
       {/* Header */}
       <div className="mb-4 bg-white rounded-xl px-4 py-2 shadow-sm border border-gray-200">
@@ -319,7 +347,6 @@ export default function AgendaDiariaPage() {
             {userData ? (
               <p className="text-gray-600 flex items-center gap-2">
                 <User className="w-5 h-5 text-[#6596d8]" />
-                {/* Si querés mostrar Apellido, Nombre lo podés partir, pero tu login trae nombre completo */}
                 <span className="font-semibold">{userData.nombre}</span>
                 {userData.rol && (
                   <span className="text-sm bg-[#6596d8]/10 text-[#6596d8] px-2 py-1 rounded-full ml-2">
@@ -380,7 +407,6 @@ export default function AgendaDiariaPage() {
 
         {/* Filtros + stats (colapsable) */}
         <div className="bg-white rounded-xl px-4 py-2 shadow-md mb-4 border border-gray-200">
-          {/* Encabezado colapsable */}
           <button
             onClick={() => setMostrarFiltros((prev) => !prev)}
             className="w-full flex items-center justify-between text-left"
@@ -396,7 +422,6 @@ export default function AgendaDiariaPage() {
             />
           </button>
 
-          {/* Contenido expandible */}
           <div
             className={`transition-all duration-300 overflow-hidden ${
               mostrarFiltros ? "max-h-[1000px] mt-4 opacity-100" : "max-h-0 opacity-0"
@@ -425,12 +450,13 @@ export default function AgendaDiariaPage() {
                 <select
                   value={filtroTurno}
                   onChange={(e) => setFiltroTurno(e.target.value)}
-                  className="p-2 border rounded"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 
+                          focus:ring-[#6596d8] focus:border-transparent transition-all duration-200"
                 >
                   <option value="todos">Todos</option>
                   {bloquesHorarios.map((bloque) => (
                     <option key={bloque.label} value={bloque.label}>
-                      {bloque.label}
+                      {bloque.label} ({bloque.inicio}:00 - {bloque.fin}:00)
                     </option>
                   ))}
                 </select>
@@ -455,7 +481,6 @@ export default function AgendaDiariaPage() {
             </div>
           </div>
 
-          {/* Stats siempre visibles */}
           <div className="grid grid-cols-3 gap-4 pt-2 border-t border-gray-200 mt-2">
             <div className="text-center">
               <p className="text-xl font-bold text-gray-800">{totalTurnos}</p>
@@ -471,7 +496,6 @@ export default function AgendaDiariaPage() {
             </div>
           </div>
         </div>
-
 
         {/* Lista de turnos */}
         <div className="bg-white rounded-xl p-4 shadow-md border border-gray-200">
@@ -492,101 +516,166 @@ export default function AgendaDiariaPage() {
               </div>
             </div>
           ) : (
-            <div className="space-y-3">
-              {turnosFiltrados.length > 0 ? (
-                (() => {
-                  // Función auxiliar: devuelve los turnos en cierto rango horario
-                  const filtrarTurnosPorHora = (inicio: number, fin: number) =>
-                    turnosFiltrados.filter((t) => {
-                      const h = new Date(t.inicio).getHours();
-                      return h >= inicio && h < fin;
-                    });
+            // En la sección de Lista de turnos, reemplazá todo el contenido dentro del div "space-y-3" con esto:
 
-                  return (
+        <div className="space-y-3">
+          {turnosFiltrados.length > 0 ? (
+            (() => {
+              // Separar turnos recepcionados
+              const turnosRecepcionados = turnosFiltrados.filter(
+                (t) => t.estado === "recepcionado"
+              );
+              const otrosTurnos = turnosFiltrados.filter(
+                (t) => t.estado !== "recepcionado"
+              );
+
+              const filtrarTurnosPorHora = (turnos: typeof turnosFiltrados, inicio: number, fin: number) =>
+                turnos.filter((t) => {
+                  const h = new Date(t.inicio).getHours();
+                  return h >= inicio && h < fin;
+                });
+
+              return (
+                <>
+                  {/* Sección de Recepcionados - Solo mostrar si hay */}
+                  {turnosRecepcionados.length > 0 && (
                     <>
-                      {bloquesHorarios.map((bloque) => {
-                        const turnosBloque = filtrarTurnosPorHora(bloque.inicio, bloque.fin);
-                        if (turnosBloque.length === 0) return null;
+                      <div className="relative flex items-center my-4">
+                        <div className="flex-grow border-t border-indigo-400"></div>
+                        <span className="flex-shrink mx-4 text-indigo-600 font-semibold bg-indigo-50 px-3 py-1 rounded-full">
+                          🔵 Recepcionados ({turnosRecepcionados.length})
+                        </span>
+                        <div className="flex-grow border-t border-indigo-400"></div>
+                      </div>
 
-                        return (
-                          <React.Fragment key={bloque.label}>
-                            {/* Separador visual */}
-                            <div className="relative flex items-center my-4">
-                              <div className="flex-grow border-t border-gray-300"></div>
-                              <span className="flex-shrink mx-4 text-gray-600 font-semibold">
-                                {bloque.label}
-                              </span>
-                              <div className="flex-grow border-t border-gray-300"></div>
-                            </div>
+                      <div className="bg-indigo-50 rounded-lg p-3 mb-4">
+                        {turnosRecepcionados.map((turno) => {
+                          const ocupado = !!turno.pacientes;
+                          const colorGradient = getEstadoColor(turno.estado, ocupado);
+                          const horaFin = turno.fin || (() => {
+                            const inicio = new Date(turno.inicio);
+                            inicio.setMinutes(inicio.getMinutes() + 30);
+                            return inicio.toISOString();
+                          })();
 
-                            {/* Turnos del bloque */}
-                            {turnosBloque.map((turno) => {
-                              const ocupado = !!turno.pacientes;
-                              const colorGradient = getEstadoColor(turno.estado, ocupado);
-                              const horaFin =
-                                turno.fin ||
-                                (() => {
-                                  const inicio = new Date(turno.inicio);
-                                  inicio.setMinutes(inicio.getMinutes() + 30);
-                                  return inicio.toISOString();
-                                })();
-
-                              return (
-                                <div
-                                  key={turno.turno_id}
-                                  onClick={() => setTurnoSeleccionado(turno)}
-                                  className={`py-2 px-5 rounded-lg bg-gradient-to-r ${colorGradient} text-white shadow-sm 
-                                              hover:shadow-lg transform transition-all duration-200 hover:scale-[1.01] 
-                                              cursor-pointer`}
-                                >
-                                  <div className="flex justify-between items-center">
-                                    <div className="flex items-center gap-4">
-                                      <div className="bg-white/20 rounded-lg p-2">
-                                        <Clock className="w-5 h-5" />
-                                      </div>
-                                      <div>
-                                        <p className="font-bold">
-                                          {formatearHora(turno.inicio)} - {formatearHora(horaFin)}
-                                        </p>
-                                        {ocupado ? (
-                                          <p className="font-semibold text-sm">
-                                            {turno.pacientes?.apellido}, {turno.pacientes?.nombre}. DNI:{" "}
-                                            {turno.pacientes?.documento}. OS:{" "}
-                                            {turno.pacientes?.obras_sociales?.nombre}
-                                          </p>
-                                        ) : (
-                                          <p className="font-medium text-sm opacity-90">
-                                            Turno disponible
-                                          </p>
-                                        )}
-                                      </div>
-                                    </div>
-
-                                    <div className="text-right">
-                                      <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-sm font-medium">
-                                        {getEstadoLabel(turno.estado)}
-                                      </span>
-                                    </div>
+                          return (
+                            <div
+                              key={turno.turno_id}
+                              onClick={() => setTurnoSeleccionado(turno)}
+                              className={`py-2 px-5 rounded-lg bg-gradient-to-r ${colorGradient} text-white shadow-sm 
+                                          hover:shadow-lg transform transition-all duration-200 hover:scale-[1.01] 
+                                          cursor-pointer mb-3`}
+                            >
+                              <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-4">
+                                  <div className="bg-white/20 rounded-lg p-2">
+                                    <Clock className="w-5 h-5" />
+                                  </div>
+                                  <div>
+                                    <p className="font-bold">
+                                      {formatearHora(turno.inicio)} - {formatearHora(horaFin)}
+                                    </p>
+                                    <p className="font-semibold text-sm">
+                                      {turno.pacientes?.apellido}, {turno.pacientes?.nombre}. DNI:{" "}
+                                      {turno.pacientes?.documento}. OS:{" "}
+                                      {turno.pacientes?.obras_sociales?.nombre || "Particular"}
+                                    </p>
                                   </div>
                                 </div>
-                              );
-                            })}
-                          </React.Fragment>
-                        );
-                      })}
+
+                                <div className="text-right">
+                                  <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-sm font-medium">
+                                    {getEstadoLabel(turno.estado)}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </>
-                  );
-                })()
-              ) : (
-                <div className="text-center py-12">
-                  <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500 text-lg">No hay turnos programados para esta fecha</p>
-                  <p className="text-gray-400 text-sm mt-2">
-                    Probá con otra fecha o ajustá los filtros
-                  </p>
-                </div>
-              )}
+                  )}
+
+                  {/* Resto de turnos por horario */}
+                  {bloquesHorarios.map((bloque) => {
+                    const turnosBloque = filtrarTurnosPorHora(otrosTurnos, bloque.inicio, bloque.fin);
+                    if (turnosBloque.length === 0) return null;
+
+                    return (
+                      <React.Fragment key={bloque.label}>
+                        <div className="relative flex items-center my-4">
+                          <div className="flex-grow border-t border-gray-300"></div>
+                          <span className="flex-shrink mx-4 text-gray-600 font-semibold">
+                            {bloque.label} ({bloque.inicio}:00 - {bloque.fin}:00)
+                          </span>
+                          <div className="flex-grow border-t border-gray-300"></div>
+                        </div>
+
+                        {turnosBloque.map((turno) => {
+                          const ocupado = !!turno.pacientes;
+                          const colorGradient = getEstadoColor(turno.estado, ocupado);
+                          const horaFin = turno.fin || (() => {
+                            const inicio = new Date(turno.inicio);
+                            inicio.setMinutes(inicio.getMinutes() + 30);
+                            return inicio.toISOString();
+                          })();
+
+                          return (
+                            <div
+                              key={turno.turno_id}
+                              onClick={() => setTurnoSeleccionado(turno)}
+                              className={`py-2 px-5 rounded-lg bg-gradient-to-r ${colorGradient} text-white shadow-sm 
+                                          hover:shadow-lg transform transition-all duration-200 hover:scale-[1.01] 
+                                          cursor-pointer`}
+                            >
+                              <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-4">
+                                  <div className="bg-white/20 rounded-lg p-2">
+                                    <Clock className="w-5 h-5" />
+                                  </div>
+                                  <div>
+                                    <p className="font-bold">
+                                      {formatearHora(turno.inicio)} - {formatearHora(horaFin)}
+                                    </p>
+                                    {ocupado ? (
+                                      <p className="font-semibold text-sm">
+                                        {turno.pacientes?.apellido}, {turno.pacientes?.nombre}. DNI:{" "}
+                                        {turno.pacientes?.documento}. OS:{" "}
+                                        {turno.pacientes?.obras_sociales?.nombre || "Particular"}
+                                      </p>
+                                    ) : (
+                                      <p className="font-medium text-sm opacity-90">
+                                        Turno disponible
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className="text-right">
+                                  <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-sm font-medium">
+                                    {getEstadoLabel(turno.estado)}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </React.Fragment>
+                    );
+                  })}
+                </>
+              );
+            })()
+          ) : (
+            <div className="text-center py-12">
+              <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 text-lg">No hay turnos programados para esta fecha</p>
+              <p className="text-gray-400 text-sm mt-2">
+                Probá con otra fecha o ajustá los filtros
+              </p>
             </div>
+          )}
+        </div>
           )}
         </div>
       </div>
