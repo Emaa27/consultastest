@@ -1,0 +1,4 @@
+si hace falta, para los gráficos instalar:
+npm install recharts 
+# o 
+yarn add recharts
