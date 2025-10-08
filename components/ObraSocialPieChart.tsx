@@ -44,7 +44,7 @@ export const ObraSocialPieChart = () => {
       return (
         <div className="p-2 bg-white border border-gray-300 rounded-lg shadow-lg text-sm">
           <p className="font-bold text-gray-800">{payload[0].name}</p>
-          <p className="text-gray-600">Pacientes: {payload[0].value}</p>
+          <p className="text-gray-600">Turnos: {payload[0].value}</p>
           <p className="text-gray-600">Representa: {percentage}%</p>
         </div>
       );
@@ -55,7 +55,7 @@ export const ObraSocialPieChart = () => {
   return (
     <div className="p-6 bg-white rounded-xl shadow-lg border border-gray-100 h-full">
       <h3 className="text-lg font-bold text-gray-800 mb-2">Distribución por Obra Social (Mensual)</h3>
-      <p className="text-sm text-gray-500 mb-4">Pacientes atendidos agrupados por tipo de Obra Social o Particular.</p>
+      <p className="text-sm text-gray-500 mb-4">Turnos agrupados por tipo de Obra Social o Particular.</p>
       
       {loading ? (
         <div className="h-64 flex items-center justify-center">
