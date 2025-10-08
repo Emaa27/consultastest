@@ -133,30 +133,59 @@ export default function GerenciaDashboardPage() {
         cancelaciones: 0,
     });
     const [loadingKpis, setLoadingKpis] = useState(true);
-    const gerenteName = "Lautaro Paniuna";
+    const [fechaInicio, setFechaInicio] = useState('');
+    const [fechaFin, setFechaFin] = useState('');
+    const [gerenteName, setGerenteName] = useState('Gerente');
+
+    const fetchKpis = async () => {
+        try {
+            setLoadingKpis(true);
+            let url = '/api/gerencia/kpis';
+            
+            if (fechaInicio && fechaFin) {
+                url += `?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`;
+            }
+            
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            setKpis({
+                citasAgendadas: data.citasAgendadas || 0,
+                citasAtendidas: data.citasAtendidas || 0,
+                nuevosPacientes: data.nuevosPacientes || 0,
+                cancelaciones: data.cancelaciones || 0,
+            });
+        } catch (error) {
+            console.error('Error cargando KPIs:', error);
+        } finally {
+            setLoadingKpis(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchKpis = async () => {
-            try {
-                setLoadingKpis(true);
-                const response = await fetch('/api/gerencia/kpis');
-                const data = await response.json();
-                
-                setKpis({
-                    citasAgendadas: data.citasAgendadas || 0,
-                    citasAtendidas: data.citasAtendidas || 0,
-                    nuevosPacientes: data.nuevosPacientes || 0,
-                    cancelaciones: data.cancelaciones || 0,
-                });
-            } catch (error) {
-                console.error('Error cargando KPIs:', error);
-            } finally {
-                setLoadingKpis(false);
+        // Obtener nombre del usuario desde localStorage
+        try {
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                setGerenteName(user.nombre || 'Gerente');
             }
-        };
+        } catch (error) {
+            console.error('Error al obtener usuario:', error);
+        }
 
         fetchKpis();
     }, []);
+
+    const aplicarFiltro = () => {
+        fetchKpis();
+    };
+
+    const limpiarFiltro = () => {
+        setFechaInicio('');
+        setFechaFin('');
+        setTimeout(() => fetchKpis(), 0);
+    };
     
     return (
         <div className="p-4 sm:p-8 space-y-8 bg-gray-50 min-h-screen lg:pl-28 pt-20 lg:pt-8">
@@ -167,14 +196,55 @@ export default function GerenciaDashboardPage() {
                     ¡Bienvenido/a, {gerenteName}! 
                 </h1>
                 <p className="mt-2 text-green-100 text-lg">
-                    Revisa la actividad y el rendimiento de tu consultorio hoy.
+                    Revisa la actividad y el rendimiento de tu consultorio.
                 </p>
+                
+                {/* Filtro de fechas */}
+                <div className="mt-4 flex flex-wrap items-end gap-3">
+                    <div>
+                        <label className="block text-sm font-medium text-green-100 mb-1">
+                            Desde
+                        </label>
+                        <input
+                            type="date"
+                            value={fechaInicio}
+                            onChange={(e) => setFechaInicio(e.target.value)}
+                            className="px-3 py-2 border border-green-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-white focus:border-transparent"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-green-100 mb-1">
+                            Hasta
+                        </label>
+                        <input
+                            type="date"
+                            value={fechaFin}
+                            onChange={(e) => setFechaFin(e.target.value)}
+                            className="px-3 py-2 border border-green-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-white focus:border-transparent"
+                        />
+                    </div>
+                    <button
+                        onClick={aplicarFiltro}
+                        disabled={!fechaInicio || !fechaFin}
+                        className="px-4 py-2 bg-white text-green-700 font-medium rounded-lg hover:bg-green-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Aplicar Filtro
+                    </button>
+                    {(fechaInicio || fechaFin) && (
+                        <button
+                            onClick={limpiarFiltro}
+                            className="px-4 py-2 bg-green-700 text-white font-medium rounded-lg hover:bg-green-800 transition-colors"
+                        >
+                            Ver Hoy
+                        </button>
+                    )}
+                </div>
             </header>
             
             {/* KPIs Destacados */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <KpiCard title="Citas Agendadas Hoy" value={kpis.citasAgendadas} icon={Calendar} colorClass="text-indigo-600" loading={loadingKpis} />
-                <KpiCard title="Citas Atendidas Hoy" value={kpis.citasAtendidas} icon={UserCheck} colorClass="text-green-600" loading={loadingKpis} />
+                <KpiCard title={fechaInicio && fechaFin ? "Citas Agendadas" : "Citas Agendadas Hoy"} value={kpis.citasAgendadas} icon={Calendar} colorClass="text-indigo-600" loading={loadingKpis} />
+                <KpiCard title={fechaInicio && fechaFin ? "Citas Atendidas" : "Citas Atendidas Hoy"} value={kpis.citasAtendidas} icon={UserCheck} colorClass="text-green-600" loading={loadingKpis} />
                 <KpiCard title="Nuevos Pacientes" value={kpis.nuevosPacientes} icon={UserPlus} colorClass="text-amber-600" loading={loadingKpis} />
                 <KpiCard title="Cancelaciones" value={kpis.cancelaciones} icon={XCircle} colorClass="text-red-600" loading={loadingKpis} />
             </div>
