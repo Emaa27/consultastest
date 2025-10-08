@@ -85,6 +85,7 @@ type UserData = {
   email: string;
   rol: string;
   profesionalId?: number;
+  profesionNombre: string;
 };
 
 type Agenda = {
