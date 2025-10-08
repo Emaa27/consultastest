@@ -1,82 +1,22 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, use } from 'react';
-import { User, Clock } from 'lucide-react';
+import { User, Clock, X, CheckCircle } from 'lucide-react';
 import { AntecedentesModal } from '@/components/historiaclinica/AntecedentesModal';
 import { NuevaConsultaModal } from '@/components/historiaclinica/NuevaConsultaModal';
 import { ConsultasList } from '@/components/historiaclinica/ConsultasList';
+import { HistoriaClinicaBase, HistoriaClinicaCompleta } from '@/lib/types';
+// ... todos tus types existentes ...
 
-type HistoriaClinicaBase = {
-  historia_id: number;
-  paciente_id: number;
-  medico_cabecera_id: number | null;
-  sexo: string | null;
-  grupo_sanguineo: string | null;
-  estado_civil: string | null;
-  ocupacion: string | null;
-  enfermedades_infancia: string | null;
-  enfermedades_cronicas: string | null;
-  cirugias: string | null;
-  alergias: string | null;
-  medicamentos_actuales: string | null;
-  consume_tabaco: boolean;
-  consume_alcohol: boolean;
-  actividad_fisica: string | null;
-  medico_cabecera?: {
-    profesional_id: number;
-    usuarios: {
-      nombre: string;
-      apellido: string;
-      email: string;
-    };
-  };
+// CAMBIAR ESTA LÍNEA:
+// const PROFESIONAL_ID = 9;
+
+// POR ESTO (obtener del localStorage/session):
+const getUserData = () => {
+  if (typeof window === 'undefined') return null;
+  const userData = localStorage.getItem('user');
+  return userData ? JSON.parse(userData) : null;
 };
-
-type DiagnosticoDetalle = {
-  diagnostico_id: number;
-  juicio_clinico: string;
-  diagnostico_presuntivo: string | null;
-  indicacion_terapeutica: string | null;
-}
-
-type ConsultaDetalle = {
-  consulta_id: number;
-  fecha_consulta: string;
-  motivo_consulta: string;
-  enfermedad_actual: string | null;
-  pa_sistolica: number | null;
-  pa_diastolica: number | null;
-  temperatura: number | null;
-  peso: number | null;
-  altura: number | null;
-  notas_evolucion: string | null;
-  diagnosticos: DiagnosticoDetalle[];
-  profesional: { 
-    profesional_id: number;
-    usuarios: {
-      nombre: string;
-      apellido: string;
-    }
-  };
-  historia: {
-    paciente_id: number;
-  };
-};
-
-type HistoriaClinicaCompleta = HistoriaClinicaBase & {
-  consultas: ConsultaDetalle[];
-  pacientes?: {
-    nombre: string;
-    apellido: string;
-    documento: string;
-    fecha_nacimiento: string | null;
-    genero: string | null;
-    email: string | null;
-    telefono: string | null;
-  };
-};
-
-const PROFESIONAL_ID = 9;
 
 export default function HistoriaClinicaPage({ 
   params 
@@ -85,6 +25,11 @@ export default function HistoriaClinicaPage({
 }) {
   const resolvedParams = use(params);
   const pacienteId = parseInt(resolvedParams.paciente_id);
+  
+  // AGREGAR ESTAS LÍNEAS:
+  const [user, setUser] = useState<any>(null);
+  const [consultaCreada, setConsultaCreada] = useState(false);
+  const [turnoId, setTurnoId] = useState<number | null>(null);
   
   const [hcData, setHcData] = useState<HistoriaClinicaCompleta | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -95,6 +40,20 @@ export default function HistoriaClinicaPage({
   const [showAntecedentesModal, setShowAntecedentesModal] = useState(false);
   const [showConsultaModal, setShowConsultaModal] = useState(false);
   const [showHistorial, setShowHistorial] = useState(false);
+
+  useEffect(() => {
+    const userData = getUserData();
+    if (userData) {
+      setUser(userData);
+    }
+    
+    // Si vienes desde un turno, obtener el turno_id de la URL
+    const searchParams = new URLSearchParams(window.location.search);
+    const turno = searchParams.get('turno_id');
+    if (turno) {
+      setTurnoId(parseInt(turno));
+    }
+  }, []);
 
   const cargarHistoriaClinica = useCallback(async () => {
     if (isNaN(pacienteId)) {
@@ -171,13 +130,17 @@ export default function HistoriaClinicaPage({
   };
   
   const handleGuardarNuevaConsulta = async (formData: any) => {
-    if (!hcData) return;
+    if (!hcData || !user) {
+      alert('Error: No se pudo identificar al profesional o la historia clínica');
+      return;
+    }
+    
     setIsFormLoading(true);
     
     const payload = {
       ...formData,
       historia_id: hcData.historia_id,
-      profesional_id: PROFESIONAL_ID,
+      profesional_id: user.profesionalId,
     };
     
     try {
@@ -192,8 +155,11 @@ export default function HistoriaClinicaPage({
         throw new Error(errorData.error || 'Falló el registro de la consulta');
       }
       
-      alert('✅ Consulta registrada con éxito.');
-      setShowConsultaModal(false);
+      // AGREGAR ESTAS LÍNEAS:
+      const result = await res.json();
+      setConsultaCreada(true);
+      
+      alert('✅ Consulta registrada con éxito. Ahora puedes finalizar la atención.');
       await cargarHistoriaClinica(); 
       
     } catch (err) {
@@ -203,6 +169,47 @@ export default function HistoriaClinicaPage({
     }
   };
 
+  const handleFinalizarConsulta = async () => {
+    if (!turnoId) {
+      alert('❌ No se encontró un turno asociado a esta consulta');
+      return;
+    }
+    
+    const confirmar = window.confirm(
+      '¿Está seguro que desea finalizar la consulta y marcar el turno como atendido?\n\nEsto cerrará la historia clínica y volverá a la agenda.'
+    );
+    
+    if (!confirmar) return;
+    
+    setIsFormLoading(true);
+    
+    try {
+      const res = await fetch(`/api/turnos/${turnoId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado: 'atendido' })
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Error al actualizar el estado del turno');
+      }
+      
+      alert('✅ Consulta finalizada exitosamente. El turno ha sido marcado como atendido.');
+      
+      // Redirigir a la agenda diaria
+      window.location.href = '/agendadiaria';
+      
+    } catch (err) {
+      alert('❌ Error al finalizar consulta: ' + (err as Error).message);
+      setIsFormLoading(false);
+    }
+  };
+
+  if (!user) {
+    return <div className="p-8 text-center text-lg">Cargando información del profesional...</div>;
+  }
+
   if (isLoading) return <div className="p-8 text-center text-lg">Cargando Historia Clínica...</div>;
   if (error) return <div className="p-8 text-center text-xl text-red-600">Error: {error}</div>;
   if (!hcData) return <div className="p-8 text-center text-xl text-gray-500">Historia Clínica no encontrada.</div>;
@@ -210,8 +217,17 @@ export default function HistoriaClinicaPage({
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       {/* Header con información del paciente */}
-      <div className="bg-gradient-to-r from-[#2e75d4] to-[#8ddee1] text-white rounded-xl shadow-lg p-6">
-        <div className="flex items-start justify-between">
+      <div className="bg-gradient-to-r from-[#2e75d4] to-[#8ddee1] text-white rounded-xl shadow-lg p-6 relative">
+        {/* Botón cerrar */}
+        <button
+          onClick={() => window.history.back()}
+          className="absolute top-4 right-4 p-2 hover:bg-white/20 rounded-full transition-colors"
+          title="Cerrar Historia Clínica"
+        >
+          <X className="w-6 h-6" />
+        </button>
+        
+        <div className="flex items-start justify-between pr-12">
           <div className="flex items-center gap-4">
             <div className="bg-white/20 p-3 rounded-full">
               <User className="w-8 h-8" />
@@ -243,9 +259,11 @@ export default function HistoriaClinicaPage({
             </div>
           </div>
           
+          {/* MODIFICAR ESTE BLOQUE: */}
           <div className="bg-white/10 rounded-lg p-3 text-right">
-            <p className="text-xs text-white/70 uppercase font-semibold">Profesional Actual</p>
-            <p className="text-sm font-medium mt-1">ID: {PROFESIONAL_ID}</p>
+            <p className="text-xs text-white/70 uppercase font-semibold">Profesional</p>
+            <p className="text-sm font-medium mt-1">{user.nombre}</p>
+            <p className="text-xs text-white/80">{user.profesionNombre}</p>
           </div>
         </div>
       </div>
@@ -264,22 +282,32 @@ export default function HistoriaClinicaPage({
 
       {/* Botones de acción */}
       <div className="flex gap-4">
-  <button
-    onClick={() => setShowAntecedentesModal(true)}
-    className="flex-1 py-4 bg-gradient-to-r from-[#2e75d4] to-[#6596d8] text-white font-bold rounded-lg hover:from-[#2560b8] hover:to-[#5585c7] transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
-  >
-    📋 {hcData.grupo_sanguineo ? 'Ver/Editar Antecedentes' : 'Completar Antecedentes'}
-  </button>
-  
-  <button
-    onClick={() => setShowConsultaModal(true)}
-    className="flex-1 py-4 bg-gradient-to-r from-[#6596d8] to-[#8ddee1] text-white font-bold rounded-lg hover:from-[#5585c7] hover:to-[#7dcdd0] transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
-  >
-    ➕ Registrar Nueva Consulta
-  </button>
-</div>
+        <button
+          onClick={() => setShowAntecedentesModal(true)}
+          className="flex-1 py-4 bg-gradient-to-r from-[#2e75d4] to-[#6596d8] text-white font-bold rounded-lg hover:from-[#2560b8] hover:to-[#5585c7] transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+        >
+          📋 {hcData.grupo_sanguineo ? 'Ver/Editar Antecedentes' : 'Completar Antecedentes'}
+        </button>
+        
+        <button
+          onClick={() => setShowConsultaModal(true)}
+          className="flex-1 py-4 bg-gradient-to-r from-[#6596d8] to-[#8ddee1] text-white font-bold rounded-lg hover:from-[#5585c7] hover:to-[#7dcdd0] transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+        >
+          ➕ Registrar Nueva Consulta
+        </button>
+        
+        <button
+          onClick={handleFinalizarConsulta}
+          disabled={isFormLoading || !turnoId}
+          className="flex-1 py-4 bg-gradient-to-r from-green-500 to-green-600 text-white font-bold rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          title={!turnoId ? 'No hay turno asociado a esta consulta' : 'Finalizar consulta y marcar turno como atendido'}
+        >
+          <CheckCircle className="w-5 h-5" />
+          {isFormLoading ? 'Finalizando...' : 'Finalizar Consulta'}
+        </button>
+      </div>
       
-     {/* Historial de Consultas - Desplegable */}
+      {/* Historial de Consultas - Desplegable */}
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
         <button
           onClick={() => setShowHistorial(!showHistorial)}
@@ -299,26 +327,33 @@ export default function HistoriaClinicaPage({
             {hcData.consultas.length === 0 ? (
               <p className="text-gray-500">Este paciente aún no tiene consultas registradas.</p>
             ) : (
-              <ConsultasList consultas={hcData.consultas} />
+              <ConsultasList 
+                consultas={hcData.consultas} 
+                profesionalId={user.profesionalId}
+              />
             )}
           </div>
         )}
       </div>
-
-      {/* Modales */}
       <AntecedentesModal
         isOpen={showAntecedentesModal}
         onClose={() => setShowAntecedentesModal(false)}
         data={hcData}
         onSubmit={handleActualizarAntecedentes}
         isLoading={isFormLoading}
+        profesionNombre={user.profesionNombre}
       />
 
       <NuevaConsultaModal
         isOpen={showConsultaModal}
-        onClose={() => setShowConsultaModal(false)}
+        onClose={() => {
+          setShowConsultaModal(false);
+          setConsultaCreada(false);
+        }}
         onSubmit={handleGuardarNuevaConsulta}
         isLoading={isFormLoading}
+        consultaCreada={consultaCreada}
+        onFinalizarConsulta={turnoId ? handleFinalizarConsulta : undefined}
       />
     </div>
   );

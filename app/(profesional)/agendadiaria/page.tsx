@@ -119,14 +119,14 @@ function extraerHoraMinutos(timestampStr: string): { hora: number; minutos: numb
 }
 
 const getEstadoColor = (estado: EstadoTurno, ocupado: boolean) => {
-  if (!ocupado) return "from-emerald-400 to-emerald-500"; // Disponible - verde más claro
+  if (!ocupado) return "from-gray-500 to-gray-500"; // Disponible - verde más claro
   const colors: Record<string, string> = {
     reservado: "from-sky-500 to-sky-600",
     recepcionado: "from-indigo-500 to-indigo-600",
     en_consulta: "from-amber-500 to-orange-600",
     atendido: "from-emerald-600 to-green-700", // Atendido - verde más oscuro
-    ausente: "from-slate-500 to-gray-600",
-    cancelado: "from-gray-500 to-gray-600",
+    ausente: "from-gray-700 to-gray-800",
+    cancelado: "from-red-600 to-red-700",
   };
   return colors[estado] || "from-gray-300 to-gray-400";
 };
@@ -760,7 +760,6 @@ export default function AgendaDiariaPage() {
                 </span>
               </div>
             </div>
-
             <div className="mt-6 space-y-3">
               {/* Botón de Atender Consulta - Solo para turnos recepcionados */}
               {/* Botón de Atender Consulta - Solo para turnos recepcionados */}
@@ -769,10 +768,11 @@ export default function AgendaDiariaPage() {
                     onClick={() => {
                       // El paciente_id viene del campo relacional en turnos
                       const pacienteId = turnoSeleccionado.paciente_id;
+                      const turnoId = turnoSeleccionado.turno_id;
                       
                       if (pacienteId) {
-                        // Ruta correcta según tu estructura de carpetas
-                        router.push(`/pacientesP/${pacienteId}/historia`);
+                        // Ruta correcta según tu estructura de carpetas, incluyendo turno_id
+                        router.push(`/pacientesP/${pacienteId}/historia?turno_id=${turnoId}`);
                       } else {
                         alert('Error: No se pudo obtener el ID del paciente');
                       }

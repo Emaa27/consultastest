@@ -6,13 +6,10 @@ import { ConsultaDetalle } from '@/lib/types'; // Importamos el tipo
 
 type Props = {
     consultas: ConsultaDetalle[];
+    profesionalId: number;
 };
 
-// Este ID debería venir de un contexto de autenticación o una store global
-// Lo mantenemos aquí para que el componente funcione de forma aislada.
-const PROFESIONAL_ID = 8;
-
-export const ConsultasList = ({ consultas }: Props) => {
+export const ConsultasList = ({ consultas, profesionalId }: Props) => {
     const [editingId, setEditingId] = useState<number | null>(null);
     const [notasTemp, setNotasTemp] = useState<string>('');
     const [isUpdating, setIsUpdating] = useState(false);
@@ -55,20 +52,23 @@ export const ConsultasList = ({ consultas }: Props) => {
 
     return (
         <div className="space-y-4">
-            {consultas.map((c) => {
+            {consultas.map((c: any) => {
                 const diagnostico = c.diagnosticos[0];
-                // Ignorar temporalmente el error de TS
-                // @ts-ignore
-                const esAutor = c.profesionales?.profesional_id === PROFESIONAL_ID;
+                // La API devuelve 'profesionales' (plural) por la relación de Prisma
+                const profesionalConsulta = c.profesional || c.profesionales;
+                const profesionalIdConsulta = Number(profesionalConsulta?.profesional_id);
+                const profesionalIdActual = Number(profesionalId);
+                const esAutor = profesionalIdConsulta === profesionalIdActual && !isNaN(profesionalIdConsulta) && !isNaN(profesionalIdActual);
                 const estaEditando = editingId === c.consulta_id;
 
                 return (
                     <div key={c.consulta_id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
                         <div className="flex justify-between items-start border-b pb-2 mb-2">
-                            <span className="text-sm font-bold bg-gradient-to-r from-[#2e75d4] to-[#6596d8] bg-clip-text text-transparent">Consulta #{c.consulta_id} - {new Date(c.fecha_consulta).toLocaleDateString()}
+                            <span className="text-sm font-bold bg-gradient-to-r from-[#2e75d4] to-[#6596d8] bg-clip-text text-transparent">
+                                Consulta #{c.consulta_id} - {new Date(c.fecha_consulta).toLocaleDateString()}
                             </span>
                             <span className="text-xs text-gray-500">
-                                {c.profesional?.usuarios?.nombre} {c.profesional?.usuarios?.apellido}
+                                {profesionalConsulta?.usuarios?.nombre} {profesionalConsulta?.usuarios?.apellido}
                             </span>
                         </div>
 

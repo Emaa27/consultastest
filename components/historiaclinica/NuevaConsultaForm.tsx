@@ -4,11 +4,19 @@ import React, { useState } from 'react';
 import { Save } from 'lucide-react'; // Importamos el icono
 
 type Props = {
-  onSubmit: (data: any) => void;
-  isLoading: boolean;
+    onSubmit: (data: any) => void;
+    isLoading: boolean;
+    onFinalizarConsulta?: () => void; // AGREGAR ESTA LÍNEA
+    consultaCreada?: boolean; // AGREGAR ESTA LÍNEA
 };
 
-export const NuevaConsultaForm = ({ onSubmit, isLoading }: Props) => {
+export const NuevaConsultaForm = ({ 
+    onSubmit, 
+    isLoading,
+    onFinalizarConsulta,
+    consultaCreada 
+  }: Props) => {
+
     const [formState, setFormState] = useState({
         motivo_consulta: '',
         enfermedad_actual: '',
@@ -72,11 +80,21 @@ export const NuevaConsultaForm = ({ onSubmit, isLoading }: Props) => {
             <textarea name="notas_evolucion" placeholder="Observaciones" value={formState.notas_evolucion} onChange={handleChange} rows={3} className="w-full p-2 border rounded" />
             <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || consultaCreada}
                 className="w-full py-3 bg-gradient-to-r from-[#6596d8] to-[#8ddee1] text-white font-bold rounded-lg hover:from-[#5585c7] hover:to-[#7dcdd0] transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg hover:shadow-xl"
-                >
-                {isLoading ? ('Registrando...' ) : (<><Save className="w-5 h-5" /> Registrar Consulta </> )}
+            >
+                {isLoading ? 'Registrando...' : <><Save className="w-5 h-5" /> Registrar Consulta</>}
             </button>
+            {consultaCreada && onFinalizarConsulta && (
+                <button
+                    type="button"
+                    onClick={onFinalizarConsulta}
+                    disabled={isLoading}
+                    className="w-full py-3 bg-gradient-to-r from-green-500 to-green-600 text-white font-bold rounded-lg hover:from-green-600 hover:to-green-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg hover:shadow-xl"
+                >
+                    ✅ Finalizar Consulta y Marcar Turno como Atendido
+                </button>
+            )}
         </form>
     );
 };

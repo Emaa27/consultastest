@@ -53,7 +53,6 @@ export async function GET(request: NextRequest, context: RouteContext) {
             usuarios: {
               select: {
                 nombre: true,
-                apellido: true,
                 email: true,
               },
             },
@@ -68,7 +67,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
                 paciente_id: true,
               },
             },
-            profesionales: { // relación correcta
+            profesionales: { // relación en Prisma (plural)
               select: {
                 profesional_id: true,
                 usuarios: {
