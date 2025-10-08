@@ -16,8 +16,8 @@ export function useTurnos() {
   const [profesionales, setProfesionales] = useState<Profesional[]>([]);
   const [obrasSociales, setObrasSociales] = useState<ObraSocial[]>([]);
 
-  const cargarTurnos = async () => {
-    setIsLoadingTurnos(true);
+  const cargarTurnos = async (silencioso = false) => {
+    if (!silencioso) setIsLoadingTurnos(true);
     try {
       const res = await fetch("/api/turnos");
       const data: Turno[] = await res.json();
@@ -26,9 +26,9 @@ export function useTurnos() {
       setTurnos(data);
     } catch (error) {
       console.error("Error cargando turnos", error);
-      alert("Error al cargar los turnos");
+      if (!silencioso) alert("Error al cargar los turnos");
     } finally {
-      setIsLoadingTurnos(false);
+      if (!silencioso) setIsLoadingTurnos(false);
     }
   };
 
@@ -62,11 +62,21 @@ export function useTurnos() {
     }
   };
 
+  // Carga inicial
   useEffect(() => {
     cargarTurnos();
     cargarPacientes();
     cargarProfesionales();
     cargarObrasSociales();
+  }, []);
+
+  // Polling: recargar turnos cada 30 segundos (silencioso)
+  useEffect(() => {
+    const intervalo = setInterval(() => {
+      cargarTurnos(true); // true = silencioso, no muestra loading
+    }, 30000); // 30 segundos
+
+    return () => clearInterval(intervalo);
   }, []);
 
   return {

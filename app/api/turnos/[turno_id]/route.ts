@@ -26,7 +26,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     }
 
     // Validar que el estado sea válido
-    const estadosValidos = ['disponible', 'reservado', 'confirmado', 'recepcionado', 'atendido', 'cancelado', 'ausente'];
+    const estadosValidos = ['disponible', 'reservado', 'confirmado', 'recepcionado', 'en_consulta', 'atendido', 'cancelado', 'ausente'];
     if (!estadosValidos.includes(estado)) {
       return NextResponse.json(
         { error: `Estado inválido. Debe ser uno de: ${estadosValidos.join(', ')}` },

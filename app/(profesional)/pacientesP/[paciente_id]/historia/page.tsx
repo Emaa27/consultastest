@@ -30,6 +30,7 @@ export default function HistoriaClinicaPage({
   const [user, setUser] = useState<any>(null);
   const [consultaCreada, setConsultaCreada] = useState(false);
   const [turnoId, setTurnoId] = useState<number | null>(null);
+  const [turnoEstado, setTurnoEstado] = useState<string | null>(null);
   
   const [hcData, setHcData] = useState<HistoriaClinicaCompleta | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -51,7 +52,18 @@ export default function HistoriaClinicaPage({
     const searchParams = new URLSearchParams(window.location.search);
     const turno = searchParams.get('turno_id');
     if (turno) {
-      setTurnoId(parseInt(turno));
+      const id = parseInt(turno);
+      setTurnoId(id);
+      
+      // Obtener el estado del turno
+      fetch(`/api/turnos/${id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.estado) {
+            setTurnoEstado(data.estado);
+          }
+        })
+        .catch(err => console.error('Error al obtener estado del turno:', err));
     }
   }, []);
 
@@ -172,6 +184,11 @@ export default function HistoriaClinicaPage({
   const handleFinalizarConsulta = async () => {
     if (!turnoId) {
       alert('❌ No se encontró un turno asociado a esta consulta');
+      return;
+    }
+
+    if (turnoEstado !== 'en_consulta') {
+      alert('❌ Solo puedes finalizar consultas que estén en estado "En Consulta".\n\nEstado actual: ' + turnoEstado);
       return;
     }
     
@@ -298,9 +315,15 @@ export default function HistoriaClinicaPage({
         
         <button
           onClick={handleFinalizarConsulta}
-          disabled={isFormLoading || !turnoId}
+          disabled={isFormLoading || !turnoId || turnoEstado !== 'en_consulta'}
           className="flex-1 py-4 bg-gradient-to-r from-green-500 to-green-600 text-white font-bold rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          title={!turnoId ? 'No hay turno asociado a esta consulta' : 'Finalizar consulta y marcar turno como atendido'}
+          title={
+            !turnoId 
+              ? 'No hay turno asociado a esta consulta' 
+              : turnoEstado !== 'en_consulta'
+              ? `Solo puedes finalizar consultas en estado "En Consulta". Estado actual: ${turnoEstado || 'desconocido'}`
+              : 'Finalizar consulta y marcar turno como atendido'
+          }
         >
           <CheckCircle className="w-5 h-5" />
           {isFormLoading ? 'Finalizando...' : 'Finalizar Consulta'}

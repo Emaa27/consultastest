@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 // ── Iconos (igual que los tuyos) ───────────────────────────────────────────────
@@ -185,11 +185,11 @@ export default function AgendaDiariaPage() {
     }
   }, []);
 
-  // ▶️ Traer turnos cuando haya profesionalId + fecha
-  useEffect(() => {
+  // ▶️ Función para cargar turnos
+  const cargarTurnos = useCallback((silencioso = false) => {
     if (!profesionalId || !fechaActual) return;
 
-    setIsLoadingTurnos(true);
+    if (!silencioso) setIsLoadingTurnos(true);
     const qs = new URLSearchParams({
       profesional_id: String(profesionalId),
       fecha: fechaActual,
@@ -296,8 +296,24 @@ export default function AgendaDiariaPage() {
       console.error("Error al cargar agendadiaria:", err);
       setTurnos([]);
     })
-    .finally(() => setIsLoadingTurnos(false));
+    .finally(() => {
+      if (!silencioso) setIsLoadingTurnos(false);
+    });
   }, [profesionalId, fechaActual, filtroTurno, filtroEstado]);
+
+  // ▶️ Cargar turnos inicialmente
+  useEffect(() => {
+    cargarTurnos();
+  }, [cargarTurnos]);
+
+  // ▶️ Polling: recargar turnos cada 30 segundos (silencioso)
+  useEffect(() => {
+    const intervalo = setInterval(() => {
+      cargarTurnos(true); // true = silencioso, no muestra loading
+    }, 30000); // 30 segundos
+
+    return () => clearInterval(intervalo);
+  }, [cargarTurnos]);
 
   // ▶️ Reflejar filtros en la URL
   useEffect(() => {
@@ -765,16 +781,31 @@ export default function AgendaDiariaPage() {
               {/* Botón de Atender Consulta - Solo para turnos recepcionados */}
               {turnoSeleccionado.estado === "recepcionado" && turnoSeleccionado.pacientes && (
                   <button
-                    onClick={() => {
-                      // El paciente_id viene del campo relacional en turnos
+                    onClick={async () => {
                       const pacienteId = turnoSeleccionado.paciente_id;
                       const turnoId = turnoSeleccionado.turno_id;
                       
-                      if (pacienteId) {
-                        // Ruta correcta según tu estructura de carpetas, incluyendo turno_id
-                        router.push(`/pacientesP/${pacienteId}/historia?turno_id=${turnoId}`);
-                      } else {
+                      if (!pacienteId) {
                         alert('Error: No se pudo obtener el ID del paciente');
+                        return;
+                      }
+
+                      try {
+                        // Cambiar estado del turno a "en_consulta"
+                        const res = await fetch(`/api/turnos/${turnoId}`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ estado: 'en_consulta' })
+                        });
+
+                        if (!res.ok) {
+                          throw new Error('Error al actualizar el estado del turno');
+                        }
+
+                        // Redirigir a la historia clínica
+                        router.push(`/pacientesP/${pacienteId}/historia?turno_id=${turnoId}`);
+                      } catch (error) {
+                        alert('❌ Error al iniciar la consulta: ' + (error as Error).message);
                       }
                     }}
                     className="w-full px-4 py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white 
