@@ -350,9 +350,9 @@ export default function AgendaDiariaPage() {
               <p className="text-gray-600 flex items-center gap-2">
                 <User className="w-5 h-5 text-[#6596d8]" />
                 <span className="font-semibold">{userData.nombre}</span>
-                {userData.rol && (
+                {userData.profesionNombre && (
                   <span className="text-sm bg-[#6596d8]/10 text-[#6596d8] px-2 py-1 rounded-full ml-2">
-                    {userData.rol}
+                    {userData.profesionNombre}
                   </span>
                 )}
                 {userData.rol?.toLowerCase() === "profesional" && !userData.profesionalId && (

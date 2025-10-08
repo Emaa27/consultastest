@@ -330,6 +330,7 @@ export default function HistoriaClinicaPage({
               <ConsultasList 
                 consultas={hcData.consultas} 
                 profesionalId={user.profesionalId}
+                pacienteId={pacienteId}
               />
             )}
           </div>

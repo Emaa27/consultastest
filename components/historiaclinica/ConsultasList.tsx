@@ -7,9 +7,10 @@ import { ConsultaDetalle } from '@/lib/types'; // Importamos el tipo
 type Props = {
     consultas: ConsultaDetalle[];
     profesionalId: number;
+    pacienteId: number;
 };
 
-export const ConsultasList = ({ consultas, profesionalId }: Props) => {
+export const ConsultasList = ({ consultas, profesionalId, pacienteId }: Props) => {
     const [editingId, setEditingId] = useState<number | null>(null);
     const [notasTemp, setNotasTemp] = useState<string>('');
     const [isUpdating, setIsUpdating] = useState(false);
@@ -115,7 +116,7 @@ export const ConsultasList = ({ consultas, profesionalId }: Props) => {
                                     />
                                     <div className="flex gap-2">
                                         <button
-                                            onClick={() => guardarNotas(c.consulta_id, c.historia.paciente_id)}
+                                            onClick={() => guardarNotas(c.consulta_id, pacienteId)}
                                             disabled={isUpdating}
                                             className="px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 disabled:opacity-50"
                                         >
