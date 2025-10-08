@@ -86,9 +86,15 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     try {
         const body: ActualizarConsultaBody = await request.json();
 
-        // TODO: Obtener profesional_id del usuario autenticado
-        // Por ahora usamos un ID hardcodeado (TEMPORAL)
-        const profesionalActual = 8; // CAMBIAR cuando tengas autenticación
+        // Obtener profesional_id del usuario autenticado desde la cookie
+        const profesionalIdCookie = request.cookies.get('profesionalId');
+        const profesionalActual = profesionalIdCookie ? parseInt(profesionalIdCookie.value, 10) : null;
+        if (!profesionalActual || isNaN(profesionalActual)) {
+            return NextResponse.json(
+                { error: 'No se pudo determinar el profesional autenticado.' },
+                { status: 401 }
+            );
+        }
 
         // Buscar la consulta y verificar permisos
         const consulta = await prisma.consultas.findFirst({
