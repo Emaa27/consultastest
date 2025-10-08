@@ -114,7 +114,7 @@ const ActivityLog = () => {
                     ))}
                 </ul>
             )}
-            <Link href="/gerencia/actividad" className="mt-6 inline-block text-sm text-green-600 font-medium hover:text-green-700 transition-colors">
+            <Link href="/gerencia/historialturnos" className="mt-6 inline-block text-sm text-green-600 font-medium hover:text-green-700 transition-colors">
                 Ver historial completo &rarr;
             </Link>
         </div>

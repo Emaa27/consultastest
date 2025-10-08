@@ -102,9 +102,9 @@ const NavbarGerente: React.FC = () => {
 
   const menuItems = [
     { id: 'turnos', label: 'Metricas', icon: BarChart3, href: '/metricas' },
-    { id: 'pacientes', label: 'Pacientes', icon: User, href: '/pacientes' },
-    { id: 'historial', label: 'Profesionales', icon: User, href: '/buscar' },
-    { id: 'profesionales', label: 'Historial Turnos', icon: Calendar, href: '/profesionales' },
+    { id: 'pacientes', label: 'Pacientes', icon: User, href: '/gerencia/pacientes' },
+    { id: 'historial', label: 'Profesionales', icon: User, href: '/gerencia/buscar' },
+    { id: 'profesionales', label: 'Historial Turnos', icon: Calendar, href: '/historialturnos' },
   ];
 
   const isActive = (href: string) =>
