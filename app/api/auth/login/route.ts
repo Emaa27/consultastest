@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     let redirectPath = '/';
     if (roleName === 'asistente') redirectPath = '/turnos';
     else if (roleName === 'profesional') redirectPath = '/agendadiaria';
-    else redirectPath = '/gerente';
+    else redirectPath = '/metricas';
 
     // Resolver profesionalId y profesión (si el usuario es profesional)
     let profesionalId: number | null = null;

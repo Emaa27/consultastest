@@ -1,19 +1,13 @@
 // app/gerencia/metricas/page.tsx
+'use client';
 
 import Link from 'next/link';
 import { TurnosPieChart } from '@/components/TurnosPieChart';
 import { ObraSocialPieChart } from '@/components/ObraSocialPieChart';
+import { useEffect, useState } from 'react';
 
 // Íconos SVG (Basados en tu código de Navbar)
 type IconProps = { className?: string };
-
-const BarChart3 = ({ className }: IconProps) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <line x1="12" y1="20" x2="12" y2="10"></line>
-    <line x1="18" y1="20" x2="18" y2="4"></line>
-    <line x1="6" y1="20" x2="6" y2="16"></line>
-  </svg>
-);
 
 const UserCheck = ({ className }: IconProps) => ( // Para 'Atendidos'
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -58,11 +52,15 @@ const XCircle = ({ className }: IconProps) => ( // Para 'Cancelaciones'
 
 
 // --- Componente KpiCard (Indicadores clave) ---
-const KpiCard = ({ title, value, icon: Icon, colorClass }: { title: string, value: string, icon: any, colorClass: string }) => (
+const KpiCard = ({ title, value, icon: Icon, colorClass, loading }: { title: string, value: string | number, icon: any, colorClass: string, loading?: boolean }) => (
   <div className="flex flex-col items-start p-4 bg-white rounded-xl shadow-lg border-b-4 border-gray-100 hover:shadow-xl transition-shadow duration-300">
     <Icon className={`h-8 w-8 mb-3 ${colorClass}`} />
     <p className="text-sm font-medium text-gray-500">{title}</p>
-    <p className="text-3xl font-extrabold text-gray-900 mt-1">{value}</p>
+    {loading ? (
+      <p className="text-2xl font-extrabold text-gray-400 mt-1">...</p>
+    ) : (
+      <p className="text-3xl font-extrabold text-gray-900 mt-1">{value}</p>
+    )}
   </div>
 );
 
@@ -71,13 +69,28 @@ const KpiCard = ({ title, value, icon: Icon, colorClass }: { title: string, valu
 
 // --- Componente ActivityLog (Registro de actividad) ---
 const ActivityLog = () => {
-    const activities = [
-        { time: '12:05', description: 'Se **agendó** turno para Mario Díaz con Dr. Gómez (16:30).' },
-        { time: '11:40', description: 'Paciente **Juan Pérez** marcado como **Atendido**.' },
-        { time: '10:15', description: 'Se **registró** al nuevo paciente Sofía Lara.' },
-        { time: '09:30', description: 'El turno de Carlos Ruiz **fue cancelado**.' },
-        { time: '09:00', description: 'Se **asignó** turno a Paula Vega con Dra. García (11:00).' },
-    ];
+    const [activities, setActivities] = useState<Array<{ time: string; description: string; tipo: string }>>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchActivities = async () => {
+            try {
+                setLoading(true);
+                const response = await fetch('/api/gerencia/actividad-reciente?limite=5');
+                const result = await response.json();
+                
+                if (result.actividades && Array.isArray(result.actividades)) {
+                    setActivities(result.actividades);
+                }
+            } catch (error) {
+                console.error('Error cargando actividad reciente:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchActivities();
+    }, []);
     
     return (
         <div className="p-6 bg-white rounded-xl shadow-lg border border-gray-100">
@@ -85,16 +98,22 @@ const ActivityLog = () => {
                 <Clock className="w-5 h-5 mr-2 text-[#16a34a]" />
                 Actividad Reciente
             </h3>
-            <ul className="space-y-4">
-                {activities.map((activity, index) => (
-                    <li key={index} className="flex items-start border-l-4 border-[#86efac] pl-3">
-                        <div className="text-sm">
-                            <span className="font-bold text-gray-900 mr-2">{activity.time}</span>
-                            <span className="text-gray-700" dangerouslySetInnerHTML={{ __html: activity.description }} />
-                        </div>
-                    </li>
-                ))}
-            </ul>
+            {loading ? (
+                <div className="py-8 text-center text-gray-500">Cargando actividad...</div>
+            ) : activities.length === 0 ? (
+                <div className="py-8 text-center text-gray-500">No hay actividad reciente</div>
+            ) : (
+                <ul className="space-y-4">
+                    {activities.map((activity, index) => (
+                        <li key={index} className="flex items-start border-l-4 border-[#86efac] pl-3">
+                            <div className="text-sm">
+                                <span className="font-bold text-gray-900 mr-2">{activity.time}</span>
+                                <span className="text-gray-700" dangerouslySetInnerHTML={{ __html: activity.description }} />
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            )}
             <Link href="/gerencia/actividad" className="mt-6 inline-block text-sm text-green-600 font-medium hover:text-green-700 transition-colors">
                 Ver historial completo &rarr;
             </Link>
@@ -103,51 +122,41 @@ const ActivityLog = () => {
 }
 
 
-// --- Componente SimpleCalendar (Calendario) ---
-const SimpleCalendar = () => (
-    <div className="p-6 bg-white rounded-xl shadow-lg border border-gray-100">
-        <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-             <Calendar className="w-5 h-5 mr-2 text-[#16a34a]" />
-            Turnos del Mes
-        </h3>
-        {/* Placeholder de calendario (Puedes reemplazarlo con una librería real) */}
-        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <p className="text-sm font-semibold text-gray-700 mb-2">Septiembre 2025</p>
-            <div className="grid grid-cols-7 gap-1 text-xs text-center">
-                {['D', 'L', 'M', 'M', 'J', 'V', 'S'].map(day => (
-                    <div key={day} className="font-bold text-gray-400">{day}</div>
-                ))}
-                {[...Array(30)].map((_, i) => {
-                    const day = i + 1;
-                    const isHighActivity = [5, 12, 19, 26].includes(day); // Días de ejemplo con alta actividad
-                    const isToday = day === 8;
-
-                    return (
-                        <div 
-                            key={i} 
-                            className={`p-1 rounded-full cursor-pointer transition-colors duration-200 
-                                ${isToday ? 'bg-green-600 text-white font-bold shadow-md' : ''}
-                                ${isHighActivity && !isToday ? 'bg-green-100 text-green-800 font-medium' : 'text-gray-700 hover:bg-gray-100'}
-                            `}
-                            title={isHighActivity ? `Turnos: ${10 + i % 10}` : `Turnos: ${i % 5}`}
-                        >
-                            {day}
-                        </div>
-                    );
-                })}
-            </div>
-        </div>
-        <div className="mt-4 p-3 bg-green-50 rounded-lg text-sm text-green-800 font-medium">
-            ¡Tienes 3 alertas de turnos sin confirmar para mañana!
-        </div>
-    </div>
-);
 
 
 
 export default function GerenciaDashboardPage() {
-    // Aquí iría tu lógica para obtener los datos del Gerente y las métricas
-    const gerenteName = "Lautaro Paniuna"; // Simulación de dato
+    const [kpis, setKpis] = useState({
+        citasAgendadas: 0,
+        citasAtendidas: 0,
+        nuevosPacientes: 0,
+        cancelaciones: 0,
+    });
+    const [loadingKpis, setLoadingKpis] = useState(true);
+    const gerenteName = "Lautaro Paniuna";
+
+    useEffect(() => {
+        const fetchKpis = async () => {
+            try {
+                setLoadingKpis(true);
+                const response = await fetch('/api/gerencia/kpis');
+                const data = await response.json();
+                
+                setKpis({
+                    citasAgendadas: data.citasAgendadas || 0,
+                    citasAtendidas: data.citasAtendidas || 0,
+                    nuevosPacientes: data.nuevosPacientes || 0,
+                    cancelaciones: data.cancelaciones || 0,
+                });
+            } catch (error) {
+                console.error('Error cargando KPIs:', error);
+            } finally {
+                setLoadingKpis(false);
+            }
+        };
+
+        fetchKpis();
+    }, []);
     
     return (
         <div className="p-4 sm:p-8 space-y-8 bg-gray-50 min-h-screen lg:pl-28 pt-20 lg:pt-8">
@@ -164,24 +173,14 @@ export default function GerenciaDashboardPage() {
             
             {/* KPIs Destacados */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {/* Usamos colores complementarios pero el verde en el ícono */}
-                <KpiCard title="Citas Agendadas Hoy" value="42" icon={Calendar} colorClass="text-indigo-600" />
-                <KpiCard title="Citas Atendidas Hoy" value="28" icon={UserCheck} colorClass="text-green-600" />
-                <KpiCard title="Nuevos Pacientes" value="7" icon={UserPlus} colorClass="text-amber-600" />
-                <KpiCard title="Cancelaciones" value="3" icon={XCircle} colorClass="text-red-600" />
+                <KpiCard title="Citas Agendadas Hoy" value={kpis.citasAgendadas} icon={Calendar} colorClass="text-indigo-600" loading={loadingKpis} />
+                <KpiCard title="Citas Atendidas Hoy" value={kpis.citasAtendidas} icon={UserCheck} colorClass="text-green-600" loading={loadingKpis} />
+                <KpiCard title="Nuevos Pacientes" value={kpis.nuevosPacientes} icon={UserPlus} colorClass="text-amber-600" loading={loadingKpis} />
+                <KpiCard title="Cancelaciones" value={kpis.cancelaciones} icon={XCircle} colorClass="text-red-600" loading={loadingKpis} />
             </div>
 
-            {/* Contenido Principal: Actividad + Gráficos + Calendario */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                
-                {/* 2. Actividad Reciente (Columna ancha) */}
-                <div className="lg:col-span-2">
-                    <ActivityLog />
-                </div>
-
-                {/* 4. Calendario (Columna delgada) */}
-                <SimpleCalendar />
-            </div>
+            {/* Contenido Principal: Actividad Reciente */}
+            <ActivityLog />
 
             {/* 3. Métricas Clave (Gráficos de Torta) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
