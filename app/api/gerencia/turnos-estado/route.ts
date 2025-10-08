@@ -31,9 +31,9 @@ export async function GET(req: Request) {
     // Mapear los estados a un formato más amigable para el gráfico
     const estadoMap: Record<string, { name: string; color: string }> = {
       atendido: { name: "Atendidos", color: "#16a34a" },
-      reservado: { name: "Pendientes", color: "#86efac" },
-      recepcionado: { name: "Pendientes", color: "#86efac" },
-      en_consulta: { name: "Pendientes", color: "#86efac" },
+      reservado: { name: "Pendientes", color: "#3B82F6" },
+      recepcionado: { name: "Pendientes", color: "#3B82F6" },
+      en_consulta: { name: "Pendientes", color: "#3B82F6" },
       cancelado: { name: "Cancelados", color: "#EF4444" },
       ausente: { name: "Ausentes", color: "#FCD34D" },
     };

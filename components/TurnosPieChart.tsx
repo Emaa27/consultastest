@@ -13,10 +13,13 @@ interface TurnoData {
 // Función para formatear el tooltip (que aparecerá al pasar el mouse)
 const renderTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
+    const percent = payload[0].percent;
+    const percentText = percent !== undefined ? `${(percent * 100).toFixed(1)}%` : '';
+    
     return (
       <div className="p-2 bg-white border border-gray-300 rounded-lg shadow-lg text-sm">
         <p className="font-bold text-gray-800">{payload[0].name}</p>
-        <p className="text-gray-600">Total: {payload[0].value} ({(payload[0].percent * 100).toFixed(1)}%)</p>
+        <p className="text-gray-600">Total: {payload[0].value} {percentText && `(${percentText})`}</p>
       </div>
     );
   }
@@ -85,6 +88,11 @@ export const TurnosPieChart = () => {
                 fill="#8884d8"
                 paddingAngle={5}
                 dataKey="value"
+                label={(entry: any) => {
+                  const total = data.reduce((sum, item) => sum + item.value, 0);
+                  const percent = total > 0 ? ((entry.value / total) * 100).toFixed(0) : 0;
+                  return `${percent}%`;
+                }}
                 labelLine={false}
               >
                 {data.map((entry, index) => (

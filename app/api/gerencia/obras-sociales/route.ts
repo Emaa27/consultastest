@@ -14,14 +14,13 @@ export async function GET(req: Request) {
     const endOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0);
     endOfMonth.setHours(23, 59, 59, 999);
 
-    // Obtener turnos atendidos del mes agrupados por obra social
+    // Obtener turnos del mes agrupados por obra social (todos los estados)
     const turnosConObraSocial = await prisma.turnos.findMany({
       where: {
         inicio: {
           gte: startOfMonth,
           lte: endOfMonth,
         },
-        estado: "atendido",
       },
       include: {
         pacientes: {
