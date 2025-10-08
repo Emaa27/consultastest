@@ -31,13 +31,15 @@ export default function DayColumn({ day, turnos, isToday, onUpdate }: DayColumnP
       </div>
 
       <div className="space-y-2">
-        {turnos.length === 0 ? (
-          <p className="text-gray-400 text-xs text-center py-4">Sin turnos</p>
-        ) : (
-          turnos.map((turno) => (
-            <TurnoCard key={turno.turno_id} turno={turno} onUpdate={onUpdate} />
-          ))
-        )}
+    <div className="max-h-96 overflow-y-auto space-y-2">
+            {turnos.length === 0 ? (
+              <p className="text-gray-400 text-xs text-center py-4">Sin turnos</p>
+            ) : (
+              turnos.map((turno) => (
+                <TurnoCard key={turno.turno_id} turno={turno} onUpdate={onUpdate} />
+              ))
+            )}
+          </div>
       </div>
     </div>
   );

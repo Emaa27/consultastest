@@ -309,11 +309,24 @@ export default function AgendaDiariaPage() {
 
   // ▶️ Polling: recargar turnos cada 30 segundos (silencioso)
   useEffect(() => {
+    // Polling más frecuente (cada 5-10 segundos)
     const intervalo = setInterval(() => {
-      cargarTurnos(true); // true = silencioso, no muestra loading
-    }, 30000); // 30 segundos
+      cargarTurnos(true);
+    }, 15000); // 5 segundos
 
     return () => clearInterval(intervalo);
+  }, [cargarTurnos]);
+
+  // También agregá visibilitychange para recargar cuando vuelvas a la pestaña
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        cargarTurnos(true); // Recarga al volver a la pestaña
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [cargarTurnos]);
 
   // ▶️ Reflejar filtros en la URL
