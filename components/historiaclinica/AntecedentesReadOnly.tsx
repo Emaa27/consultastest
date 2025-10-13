@@ -20,6 +20,8 @@ export const AntecedentesReadOnly = ({ data }: Props) => {
         { label: "Enfermedades Crónicas", value: data.enfermedades_cronicas },
         { label: "Cirugías Previas", value: data.cirugias },
         { label: "Medicación Actual", value: data.medicamentos_actuales },
+        { label: "Peso (kg)", value: data.peso?.toString() },
+        { label: "Altura (m)", value: data.altura?.toString() },
     ];
     
     return (
