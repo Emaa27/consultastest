@@ -16,22 +16,26 @@ const Calendar = ({ className }: IconProps) => (
   </svg>
 );
 
-const Users = ({ className }: IconProps) => (
+const UserPlus = ({ className }: IconProps) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-    <circle cx="9" cy="7" r="4"></circle>
-    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+    <circle cx="8.5" cy="7" r="4"></circle>
+    <line x1="20" y1="8" x2="20" y2="14"></line>
+    <line x1="17" y1="11" x2="23" y2="11"></line>
   </svg>
 );
 
-const FileText = ({ className }: IconProps) => (
+export const User = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-    <polyline points="14,2 14,8 20,8"></polyline>
-    <line x1="16" y1="13" x2="8" y2="13"></line>
-    <line x1="16" y1="17" x2="8" y2="17"></line>
-    <polyline points="10,9 9,9 8,9"></polyline>
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+    <circle cx="12" cy="7" r="4"></circle>
+  </svg>
+);
+
+const Search = ({ className }: IconProps) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <circle cx="11" cy="11" r="8"></circle>
+    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
   </svg>
 );
 
@@ -40,6 +44,14 @@ const UserCheck = ({ className }: IconProps) => (
     <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
     <circle cx="8.5" cy="7" r="4"></circle>
     <polyline points="17,11 19,13 23,9"></polyline>
+  </svg>
+);
+
+const BarChart3 = ({ className }: IconProps) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <line x1="12" y1="20" x2="12" y2="10"></line>
+    <line x1="18" y1="20" x2="18" y2="4"></line>
+    <line x1="6" y1="20" x2="6" y2="16"></line>
   </svg>
 );
 
@@ -66,11 +78,11 @@ const X = ({ className }: IconProps) => (
   </svg>
 );
 
-/* ---------- Componente ---------- */
-export default function NavbarProfesional() {
+/* ---------- Componente (versión GERENTE en VERDE) ---------- */
+const NavbarGerente: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [userName, setUserName] = useState('Usuario');
+  const [userName, setUserName] = useState('Gerente');
   const [userEmail, setUserEmail] = useState('');
   const pathname = usePathname();
   const router = useRouter();
@@ -80,7 +92,7 @@ export default function NavbarProfesional() {
       const userStr = localStorage.getItem('user');
       if (userStr) {
         const user = JSON.parse(userStr);
-        setUserName(user.nombre || 'Usuario');
+        setUserName(user.nombre || 'Gerente');
         setUserEmail(user.email || '');
       }
     } catch (error) {
@@ -89,13 +101,14 @@ export default function NavbarProfesional() {
   }, []);
 
   const menuItems = [
-    { id: 'agenda', label: 'Mi Agenda', icon: Calendar, href: '/agendadiaria' },
-    { id: 'pacientes', label: 'Mis Pacientes', icon: Users, href: '/profesional/pacientes' },
-    { id: 'historias', label: 'Historias Clínicas', icon: FileText, href: '/historias' },
-    { id: 'perfil', label: 'Mi Perfil', icon: UserCheck, href: '/profesional/perfil' },
+    { id: 'turnos', label: 'Metricas', icon: BarChart3, href: '/metricas' },
+    { id: 'pacientes', label: 'Pacientes', icon: User, href: '/gerencia/pacientes' },
+    { id: 'historial', label: 'Profesionales', icon: User, href: '/gerencia/buscar' },
+    { id: 'profesionales', label: 'Historial Turnos', icon: Calendar, href: '/historialturnos' },
   ];
 
-  const isActive = (href: string) => pathname === href || pathname?.startsWith(href + '/');
+  const isActive = (href: string) =>
+    href === '/' ? pathname === '/' : pathname?.startsWith(href);
 
   const handleLogout = () => {
     try {
@@ -106,14 +119,8 @@ export default function NavbarProfesional() {
     }
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
+  const getInitials = (name: string) =>
+    name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
   return (
     <>
@@ -131,16 +138,16 @@ export default function NavbarProfesional() {
         {/* Logo */}
         <div className="flex items-center justify-center p-6 border-b border-gray-200">
           <div className={`flex ${isExpanded ? 'flex-col' : 'flex-col'} items-center space-y-3 transition-all duration-300`}>
-            <img 
-              src="/images/eitan-logo.png" 
-              alt="EiTAN Logo" 
-              className={`object-contain transition-all duration-300 ${isExpanded ? 'w-12 h-12' : 'w-10 h-10'}`} 
+            <img
+              src="/images/eitan-logo.png"
+              alt="EiTAN Logo"
+              className={`object-contain transition-all duration-300 ${isExpanded ? 'w-12 h-12' : 'w-10 h-10'}`}
             />
             {isExpanded && (
-              <img 
-                src="/images/eitan-text.png" 
-                alt="EiTAN Salta" 
-                className="h-8 object-contain opacity-0 animate-fade-in" 
+              <img
+                src="/images/eitan-text.png"
+                alt="EiTAN Salta"
+                className="h-8 object-contain opacity-0 animate-fade-in"
               />
             )}
           </div>
@@ -156,7 +163,7 @@ export default function NavbarProfesional() {
                 href={href}
                 className={`flex items-center px-3 py-3 rounded-xl transition-all duration-200 group relative ${
                   active
-                    ? 'bg-gradient-to-r from-[#6596d8] to-[#b5e4e6] text-white shadow-lg'
+                    ? 'bg-gradient-to-r from-[#16a34a] to-[#86efac] text-white shadow-lg'
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
                 aria-current={active ? 'page' : undefined}
@@ -168,7 +175,8 @@ export default function NavbarProfesional() {
                     {label}
                   </span>
                 )}
-                
+
+                {/* Tooltip cuando está colapsado */}
                 {!isExpanded && (
                   <div className="absolute left-full ml-2 px-3 py-1 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
                     {label}
@@ -181,8 +189,9 @@ export default function NavbarProfesional() {
 
         {/* Usuario y Logout */}
         <div className="p-4 border-t border-gray-200 space-y-3">
+          {/* Info del usuario */}
           <div className={`flex items-center ${isExpanded ? 'px-3' : 'justify-center'} transition-all duration-300`}>
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#6596d8] to-[#b5e4e6] flex items-center justify-center text-white font-bold flex-shrink-0">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#16a34a] to-[#86efac] flex items-center justify-center text-white font-bold flex-shrink-0">
               {getInitials(userName)}
             </div>
             {isExpanded && (
@@ -193,10 +202,11 @@ export default function NavbarProfesional() {
             )}
           </div>
 
+          {/* Botón Logout */}
           <button
             type="button"
             onClick={handleLogout}
-            className={`w-full flex items-center px-3 py-3 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-xl transition-all duration-200 group relative ${
+            className={`w-full flex items-center px-3 py-3 text-gray-700 hover:bg-green-50 hover:text-green-700 rounded-xl transition-all duration-200 group relative ${
               !isExpanded && 'justify-center'
             }`}
             title={!isExpanded ? 'Cerrar sesión' : undefined}
@@ -205,7 +215,7 @@ export default function NavbarProfesional() {
             {isExpanded && (
               <span className="ml-3 font-medium opacity-0 animate-fade-in">Cerrar sesión</span>
             )}
-            
+
             {!isExpanded && (
               <div className="absolute left-full ml-2 px-3 py-1 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
                 Cerrar sesión
@@ -224,7 +234,7 @@ export default function NavbarProfesional() {
           </div>
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-md text-gray-600 hover:text-[#6596d8] hover:bg-gray-100"
+            className="p-2 rounded-md text-gray-600 hover:text-[#16a34a] hover:bg-gray-100"
           >
             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -248,7 +258,7 @@ export default function NavbarProfesional() {
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={`flex items-center px-4 py-3 rounded-xl transition-all duration-200 ${
                       active
-                        ? 'bg-gradient-to-r from-[#6596d8] to-[#b5e4e6] text-white shadow-lg'
+                        ? 'bg-gradient-to-r from-[#16a34a] to-[#86efac] text-white shadow-lg'
                         : 'text-gray-700 hover:bg-gray-100'
                     }`}
                     aria-current={active ? 'page' : undefined}
@@ -261,7 +271,7 @@ export default function NavbarProfesional() {
 
               <div className="pt-4 border-t border-gray-200 space-y-3">
                 <div className="flex items-center px-4 py-2">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#6596d8] to-[#b5e4e6] flex items-center justify-center text-white font-bold">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#16a34a] to-[#86efac] flex items-center justify-center text-white font-bold">
                     {getInitials(userName)}
                   </div>
                   <div className="ml-3">
@@ -273,7 +283,7 @@ export default function NavbarProfesional() {
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="w-full flex items-center px-4 py-3 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-xl transition-all duration-200"
+                  className="w-full flex items-center px-4 py-3 text-gray-700 hover:bg-green-50 hover:text-green-700 rounded-xl transition-all duration-200"
                 >
                   <LogOut className="w-5 h-5 mr-3" />
                   <span className="font-medium">Cerrar sesión</span>
@@ -289,11 +299,10 @@ export default function NavbarProfesional() {
           from { opacity: 0; }
           to { opacity: 1; }
         }
-        
-        .animate-fade-in {
-          animation: fade-in 0.3s ease-out forwards;
-        }
+        .animate-fade-in { animation: fade-in 0.3s ease-out forwards; }
       `}</style>
     </>
   );
-}
+};
+
+export default NavbarGerente;

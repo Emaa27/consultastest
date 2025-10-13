@@ -170,7 +170,7 @@ const Navbar: React.FC = () => {
         </div>
 
         {/* Menu */}
-        <nav className="flex-1 px-3 py-6 space-y-2 overflow-y-auto">
+        <nav className="flex-1 px-3 py-6 space-y-2 overflow-hidden">
           {menuItems.map(({ id, label, icon: Icon, href }) => {
             const active = isActive(href);
             return (

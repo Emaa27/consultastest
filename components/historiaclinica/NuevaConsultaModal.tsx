@@ -7,9 +7,19 @@ type NuevaConsultaModalProps = {
   onClose: () => void;
   onSubmit: (data: any) => void;
   isLoading: boolean;
+  onFinalizarConsulta?: () => void; // AGREGAR
+  consultaCreada?: boolean; // AGREGAR
 };
 
-export const NuevaConsultaModal = ({ isOpen, onClose, onSubmit, isLoading }: NuevaConsultaModalProps) => {
+
+export const NuevaConsultaModal = ({ 
+  isOpen, 
+  onClose, 
+  onSubmit, 
+  isLoading,
+  onFinalizarConsulta, // AGREGAR
+  consultaCreada // AGREGAR
+}: NuevaConsultaModalProps) => {
   if (!isOpen) return null;
 
   return (
@@ -25,8 +35,13 @@ export const NuevaConsultaModal = ({ isOpen, onClose, onSubmit, isLoading }: Nue
           </button>
         </div>
 
-        <div className="p-6">
-          <NuevaConsultaForm onSubmit={onSubmit} isLoading={isLoading} />
+          <div className="p-6">
+          <NuevaConsultaForm 
+            onSubmit={onSubmit} 
+            isLoading={isLoading}
+            onFinalizarConsulta={onFinalizarConsulta} // AGREGAR
+            consultaCreada={consultaCreada} // AGREGAR
+          />
         </div>
       </div>
     </div>

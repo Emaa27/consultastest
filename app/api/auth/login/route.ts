@@ -13,15 +13,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Buscar usuario con su rol e (idealmente) su profesional vinculado
+    // Traemos el usuario + su rol y, si aplica, su profesional con la profesión
     const usuario = await prisma.usuarios.findFirst({
       where: { email, estado: 'activo' },
       include: {
         roles: true,
-        // Si tu relación desde usuarios → profesionales es 1:1 pero el nombre es plural,
-        // igual podés usar select para traer solo la PK.
-        profesionales: { select: { profesional_id: true, usuario_id: true } }
-      }
+        profesionales: {
+          select: {
+            profesional_id: true,
+            usuario_id: true,
+            profesiones: { select: { nombre: true } }, // ← profesión del profesional
+          },
+        },
+      },
     });
 
     if (!usuario) {
@@ -31,7 +35,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar contraseña (en producción usar bcrypt.compare)
+    // ⚠️ En prod, usar bcrypt.compare (acá lo dejo como opción)
     const valid = password === usuario.contrasena;
     // const valid = await bcrypt.compare(password, usuario.contrasena);
 
@@ -42,35 +46,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Rol → redirección
+    // Rol del usuario → redirección
     const roleName = usuario.roles.nombre.toLowerCase();
     let redirectPath = '/';
-    if (roleName === 'asistente') {
-      redirectPath = '/turnos';
-    } else if (roleName === 'profesional') {
-      redirectPath = '/agendadiaria';
-    } else {
-      redirectPath = '/dashboard';
-    }
+    if (roleName === 'asistente') redirectPath = '/turnos';
+    else if (roleName === 'profesional') redirectPath = '/agendadiaria';
+    else redirectPath = '/metricas';
 
-    // Resolver profesional_id si es profesional
+    // Resolver profesionalId y profesión (si el usuario es profesional)
     let profesionalId: number | null = null;
-    if (roleName === 'Profesional') {
-      // Si el include vino con algo, úsalo
-      const inc = Array.isArray(usuario.profesionales) ? usuario.profesionales[0] : null;
-      profesionalId = inc?.profesional_id ?? null;
+    let profesionNombre: string | null = null;
 
-      // Fallback: por si el include vino vacío o la relación no está poblada
-      if (!profesionalId) {
+    if (roleName === 'profesional') {
+      const inc = Array.isArray(usuario.profesionales) ? usuario.profesionales[0] : usuario.profesionales ?? null;
+
+      if (inc) {
+        profesionalId = inc.profesional_id ?? null;
+        profesionNombre = inc.profesiones?.nombre ?? null;
+      }
+
+      // Fallback por si no vino poblado (poco probable con el include anterior)
+      if (!profesionalId || !profesionNombre) {
         const profesional = await prisma.profesionales.findFirst({
           where: { usuario_id: usuario.usuario_id },
-          select: { profesional_id: true }
+          select: { profesional_id: true, profesiones: { select: { nombre: true } } },
         });
-        profesionalId = profesional?.profesional_id ?? null;
+        profesionalId = profesional?.profesional_id ?? profesionalId;
+        profesionNombre = profesional?.profesiones?.nombre ?? profesionNombre;
       }
     }
 
-    // Armar respuesta
+    // Payload hacia el cliente
     const payload = {
       success: true,
       message: 'Login exitoso',
@@ -78,34 +84,45 @@ export async function POST(request: NextRequest) {
         id: usuario.usuario_id,
         nombre: `${usuario.nombre} ${usuario.apellido}`,
         email: usuario.email,
-        rol: usuario.roles.nombre,
-        profesionalId // null si no corresponde
+        rol: usuario.roles.nombre,             // rol del usuario (asistente/profesional/gerente)
+        profesionalId,                         // null si no corresponde
+        profesionNombre,                       // p. ej. “Odontólogo” (null si no es profesional)
       },
-      redirectPath
+      redirectPath,
     };
 
-    // Si querés "guardar" en el server-side, setear cookie httpOnly:
+    // Respuesta + cookies httpOnly
     const res = NextResponse.json(payload);
+
+    // Guardamos profesionalId si existe
     if (profesionalId) {
       res.cookies.set('profesionalId', String(profesionalId), {
         httpOnly: true,
         sameSite: 'lax',
         secure: true,
-        path: '/'
-        // opcional: maxAge: 60 * 60 * 24 // 1 día
+        path: '/',
       });
     }
 
-    // También podrías setear una cookie de rol/usuario si te sirve:
+    // Cookie con el rol del usuario (ya la tenías)
     res.cookies.set('rol', roleName, {
       httpOnly: true,
       sameSite: 'lax',
       secure: true,
-      path: '/'
+      path: '/',
     });
 
-    return res;
+    // NUEVO: cookie con la profesión del profesional (nombre “humano”)
+    if (profesionNombre) {
+      res.cookies.set('profesion', profesionNombre, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: true,
+        path: '/',
+      });
+    }
 
+    return res;
   } catch (error) {
     console.error('Error en login:', error);
     return NextResponse.json(

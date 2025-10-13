@@ -27,21 +27,34 @@ type AntecedentesModalProps = {
   data: HistoriaClinicaBase;
   onSubmit: (data: HistoriaClinicaBase) => void;
   isLoading: boolean;
+  profesionNombre?: string; // AGREGAR ESTA LÍNEA
 };
 
-export const AntecedentesModal = ({ isOpen, onClose, data, onSubmit, isLoading }: AntecedentesModalProps) => {
+export const AntecedentesModal = ({ 
+  isOpen, 
+  onClose, 
+  data, 
+  onSubmit, 
+  isLoading,
+  profesionNombre // AGREGAR AQUÍ
+}: AntecedentesModalProps) => {
   const [isEditing, setIsEditing] = React.useState(false);
+  const puedeEditarAntecedentes = profesionNombre === "Clínico"; // AGREGAR ESTA LÍNEA
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        {/* Header con botón cerrar */}
         <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-800">📋 Antecedentes y Filiación</h2>
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-[#2e75d4] to-[#8ddee1] bg-clip-text text-transparent">
+            📋 Antecedentes Médicos
+          </h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            title="Cerrar"
           >
             <X className="w-6 h-6" />
           </button>
@@ -62,12 +75,18 @@ export const AntecedentesModal = ({ isOpen, onClose, data, onSubmit, isLoading }
             <>
               <AntecedentesReadOnly data={data} />
               <div className="mt-6 flex justify-end">
-                <button
+                {puedeEditarAntecedentes ? (
+                  <button
                     onClick={() => setIsEditing(true)}
                     className="px-6 py-3 bg-gradient-to-r from-[#2e75d4] to-[#6596d8] text-white font-bold rounded-lg hover:from-[#2560b8] hover:to-[#5585c7] transition-all shadow-lg"
-                    >
+                  >
                     {data.grupo_sanguineo ? 'Editar' : 'Completar Información'}
-                </button>
+                  </button>
+                ) : (
+                  <p className="text-sm text-gray-500 italic">
+                    Solo el médico clínico puede editar los antecedentes
+                  </p>
+                )}
               </div>
             </>
           )}

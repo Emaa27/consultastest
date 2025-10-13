@@ -24,12 +24,12 @@ export async function GET() {
                 },
                 _count: {
                     select: {
-                        historias_como_cabecera: true
+                        historias_clinicas: true
                     }
                 }
             },
             orderBy: {
-                historias_como_cabecera: {
+                historias_clinicas: {
                     _count: 'asc'
                 }
             }

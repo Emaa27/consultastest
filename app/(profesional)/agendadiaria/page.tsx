@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 // ── Iconos (igual que los tuyos) ───────────────────────────────────────────────
@@ -51,37 +51,51 @@ const X = ({ className }: { className?: string }) => (
     <line x1="6" y1="6" x2="18" y2="18"></line>
   </svg>
 );
+const ChevronDown = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <polyline points="6,9 12,15 18,9"></polyline>
+  </svg>
+);
 
 // ── Tipos ──────────────────────────────────────────────────────────────────────
-type EstadoTurno = "reservado" | "confirmado" | "cancelado" | "no_show" | "atendido";
+type EstadoTurno = "disponible" | "reservado" | "confirmado" | "en_consulta" | "atendido" | "ausente" | "cancelado";
 
 type Turno = {
   turno_id: number;
   inicio: string;
   fin?: string;
   estado: EstadoTurno;
+  fecha_confirmacion: string;
+  paciente_id?: number; // <- Agregá este campo que viene de la tabla turnos
   pacientes?: { 
+    paciente_id: number; // <- Y este que viene de la tabla pacientes
     nombre: string;
     apellido: string;
     documento?: string;
+    obras_sociales?: { nombre: string } | null;
   } | null;
   profesionales?: { 
     usuarios: { nombre: string; apellido: string };
     profesiones?: { nombre: string };
   };
-  obras_sociales?: { nombre: string } | null;
 };
 
-// ⚠️ Alinear con lo que devuelve tu login: id, nombre (completo), email, rol, profesionalId
 type UserData = {
   id: number;
-  nombre: string;    // viene "Nombre Apellido" ya concatenado desde el login
+  nombre: string;
   email: string;
-  rol: string;       // "Profesional" | ...
-  profesionalId?: number; // <-- camelCase como en tu payload
+  rol: string;
+  profesionalId?: number;
+  profesionNombre: string;
 };
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
+type Agenda = {
+  hora_inicio: string;
+  hora_fin: string;
+  slot_min: number;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function formatearFecha(fechaStr: string) {
   const fecha = new Date(`${fechaStr}T00:00:00`);
   return fecha.toLocaleDateString("es-AR", {
@@ -91,31 +105,74 @@ function formatearFecha(fechaStr: string) {
     year: "numeric",
   });
 }
+
 function formatearHora(fechaStr: string) {
   const fecha = new Date(fechaStr);
   return fecha.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
 }
-const getEstadoColor = (estado: EstadoTurno, ocupado: boolean) => {
-  if (!ocupado) return "from-green-400 to-green-500";
-  const colors: Record<string, string> = {
-    confirmado: "from-blue-400 to-blue-500",
-    atendido: "from-purple-400 to-purple-500",
-    cancelado: "from-red-400 to-red-500",
-    no_show: "from-gray-400 to-gray-500",
-    reservado: "from-yellow-400 to-yellow-500",
+
+// Función mejorada para extraer hora:minutos de un timestamp
+function extraerHoraMinutos(timestampStr: string): { hora: number; minutos: number } {
+  const fecha = new Date(timestampStr);
+  return {
+    hora: fecha.getUTCHours(), // Usar UTC porque los timestamps vienen en UTC
+    minutos: fecha.getUTCMinutes()
   };
-  return colors[estado] || "from-orange-400 to-yellow-400";
+}
+
+// Función que devuelve en formato mm:ss (o HH:mm:ss) la diferencia con la hora de ahora
+function diferenciaConAhora(fechaDesde: string, ahora = new Date()) {
+  const ms = ahora.getTime() - new Date(fechaDesde).getTime();
+  const totalSeconds = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return [
+      hours.toString().padStart(2, "0"),
+      minutes.toString().padStart(2, "0"),
+      seconds.toString().padStart(2, "0"),
+    ].join(":");
+  } else {
+    return [
+      minutes.toString().padStart(2, "0"),
+      seconds.toString().padStart(2, "0"),
+    ].join(":");
+  }
+}
+
+const getEstadoColor = (estado: EstadoTurno, ocupado: boolean) => {
+  if (!ocupado) return "from-gray-500 to-gray-500"; // Disponible - verde más claro
+  const colors: Record<string, string> = {
+    reservado: "from-sky-500 to-sky-600",
+    confirmado: "from-indigo-500 to-indigo-600",
+    en_consulta: "from-amber-500 to-orange-600",
+    atendido: "from-emerald-600 to-green-700", // Atendido - verde más oscuro
+    ausente: "from-gray-700 to-gray-800",
+    cancelado: "from-red-600 to-red-700",
+  };
+  return colors[estado] || "from-gray-300 to-gray-400";
 };
+
 const getEstadoLabel = (estado: EstadoTurno) => {
   const labels: Record<string, string> = {
-    confirmado: "Confirmado",
-    atendido: "Atendido",
-    cancelado: "Cancelado",
-    no_show: "No asistió",
+    disponible: "Disponible",
     reservado: "Reservado",
+    confirmado: "Confirmado",
+    en_consulta: "En consulta",
+    atendido: "Atendido",
+    ausente: "No asistió",
+    cancelado: "Cancelado",
   };
   return labels[estado] || estado;
 };
+
+// Bloques horarios basados en tu agenda: 8-12 y 14-18
+const bloquesHorarios = [
+  { label: "Mañana", inicio: 8, fin: 12 },
+  { label: "Tarde", inicio: 14, fin: 18 },
+];
 
 // ── Componente ────────────────────────────────────────────────────────────────
 export default function AgendaDiariaPage() {
@@ -125,12 +182,11 @@ export default function AgendaDiariaPage() {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [profesionalId, setProfesionalId] = useState<number | null>(null);
 
+  const [mostrarFiltros, setMostrarFiltros] = useState(false);
   const [fechaActual, setFechaActual] = useState<string>(() => {
     return searchParams.get("fecha") || new Date().toISOString().split("T")[0];
   });
-  const [filtroTurno, setFiltroTurno] = useState<"todos" | "maniana" | "tarde">(
-    (searchParams.get("horario") as "todos" | "maniana" | "tarde") || "todos"
-  );
+  const [filtroTurno, setFiltroTurno] = useState<string>("todos");
   const [filtroEstado, setFiltroEstado] = useState<"todos" | "ocupados" | "libres">(
     (searchParams.get("estado") as "todos" | "ocupados" | "libres") || "todos"
   );
@@ -138,6 +194,15 @@ export default function AgendaDiariaPage() {
   const [turnos, setTurnos] = useState<Turno[]>([]);
   const [turnoSeleccionado, setTurnoSeleccionado] = useState<Turno | null>(null);
   const [isLoadingTurnos, setIsLoadingTurnos] = useState(false);
+
+  const [ahora, setAhora] = useState(new Date());
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setAhora(new Date());
+    }, 1000);
+
+    return () => clearInterval(interval); // limpiar el intervalo al desmontar
+  }, []);
 
   // ▶️ Cargar usuario + profesionalId desde localStorage
   useEffect(() => {
@@ -147,29 +212,151 @@ export default function AgendaDiariaPage() {
     try {
       const u = JSON.parse(stored) as UserData;
       setUserData(u);
-      if (u.profesionalId) setProfesionalId(u.profesionalId); // <-- clave corregida
+      if (u.profesionalId) setProfesionalId(u.profesionalId);
     } catch {
       // ignorar parse error
     }
   }, []);
 
-  // ▶️ Traer turnos cuando haya profesionalId + fecha
-  useEffect(() => {
+  // ▶️ Función para cargar turnos
+  const cargarTurnos = useCallback((silencioso = false) => {
     if (!profesionalId || !fechaActual) return;
 
-    setIsLoadingTurnos(true);
+    if (!silencioso) setIsLoadingTurnos(true);
     const qs = new URLSearchParams({
-      profesional_id: String(profesionalId), // <-- param que espera tu API
+      profesional_id: String(profesionalId),
       fecha: fechaActual,
     });
     if (filtroTurno !== "todos") qs.set("horario", filtroTurno);
     if (filtroEstado !== "todos") qs.set("estado", filtroEstado);
 
     fetch(`/api/agendadiaria?${qs.toString()}`)
-      .then((r) => r.json())
-      .then((data) => setTurnos(Array.isArray(data) ? data : []))
-      .finally(() => setIsLoadingTurnos(false));
+    .then((r) => r.json())
+    .then((data) => {
+      const turnosReales = Array.isArray(data.turnos) ? data.turnos : [];
+      const agenda = Array.isArray(data.agenda) ? data.agenda : [];
+
+      // Genero todos los posibles turnos vacíos en base a la agenda
+      const turnosGenerados: Turno[] = [];
+
+      agenda.forEach((ag: Agenda) => {
+        // Extraer hora y minutos de los timestamps
+        const horaInicio = extraerHoraMinutos(ag.hora_inicio);
+        const horaFin = extraerHoraMinutos(ag.hora_fin);
+        const duracion = Number(ag.slot_min) || 30; // default 30 min si no hay slot_min
+
+        // Crear fechas para el día actual con las horas extraídas
+        const fechaBase = new Date(`${fechaActual}T00:00:00`);
+        fechaBase.setHours(horaInicio.hora, horaInicio.minutos, 0, 0);
+        
+        const finAgenda = new Date(`${fechaActual}T00:00:00`);
+        finAgenda.setHours(horaFin.hora, horaFin.minutos, 0, 0);
+
+        console.log(`Generando turnos desde ${fechaBase.toISOString()} hasta ${finAgenda.toISOString()}`);
+
+        // Generar turnos cada 'duracion' minutos
+        const cursor = new Date(fechaBase);
+        while (cursor < finAgenda) {
+          const inicioStr = cursor.toISOString();
+          const finSlot = new Date(cursor);
+          finSlot.setMinutes(finSlot.getMinutes() + duracion);
+          const finStr = finSlot.toISOString();
+
+          // Generar un ID único para el turno vacío
+          const turnoId = cursor.getHours() * 10000 + cursor.getMinutes() * 100 + Math.floor(Math.random() * 100);
+
+          turnosGenerados.push({
+            turno_id: turnoId,
+            inicio: inicioStr,
+            fin: finStr,
+            estado: "disponible",
+            pacientes: null,
+            profesionales: undefined,
+          });
+
+          cursor.setMinutes(cursor.getMinutes() + duracion);
+        }
+      });
+
+      console.log("Turnos generados:", turnosGenerados.length);
+
+      // Combino turnos generados con los reales (ocupados reemplazan los vacíos)
+      const turnosCombinados = turnosGenerados.map((t) => {
+        const real = turnosReales.find((r: any) => {
+          const inicioReal = new Date(r.inicio).getTime();
+          const inicioGen = new Date(t.inicio).getTime();
+          return Math.abs(inicioReal - inicioGen) < 60 * 1000; // diferencia < 1 min
+        });
+
+        if (real) {
+          // Si el turno real no tiene 'fin', lo calculo
+          if (!real.fin && real.duracion_min) {
+            const inicio = new Date(real.inicio);
+            const fin = new Date(inicio);
+            fin.setMinutes(inicio.getMinutes() + Number(real.duracion_min));
+            real.fin = fin.toISOString();
+          }
+          return real;
+        }
+        return t;
+      });
+
+      // También agregar turnos reales que no coincidan con ningún generado
+      turnosReales.forEach((real: any) => {
+        const yaExiste = turnosCombinados.some(t => t.turno_id === real.turno_id);
+        if (!yaExiste) {
+          if (!real.fin && real.duracion_min) {
+            const inicio = new Date(real.inicio);
+            const fin = new Date(inicio);
+            fin.setMinutes(inicio.getMinutes() + Number(real.duracion_min));
+            real.fin = fin.toISOString();
+          }
+          turnosCombinados.push(real);
+        }
+      });
+
+      // Ordenar por hora de inicio
+      turnosCombinados.sort((a, b) => 
+        new Date(a.inicio).getTime() - new Date(b.inicio).getTime()
+      );
+
+      setTurnos(turnosCombinados);
+    })
+    .catch((err) => {
+      console.error("Error al cargar agendadiaria:", err);
+      setTurnos([]);
+    })
+    .finally(() => {
+      if (!silencioso) setIsLoadingTurnos(false);
+    });
   }, [profesionalId, fechaActual, filtroTurno, filtroEstado]);
+
+  // ▶️ Cargar turnos inicialmente
+  useEffect(() => {
+    cargarTurnos();
+  }, [cargarTurnos]);
+
+  // ▶️ Polling: recargar turnos cada 30 segundos (silencioso)
+  useEffect(() => {
+    // Polling más frecuente (cada 5-10 segundos)
+    const intervalo = setInterval(() => {
+      cargarTurnos(true);
+    }, 15000); // 5 segundos
+
+    return () => clearInterval(intervalo);
+  }, [cargarTurnos]);
+
+  // También agregá visibilitychange para recargar cuando vuelvas a la pestaña
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        cargarTurnos(true); // Recarga al volver a la pestaña
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [cargarTurnos]);
 
   // ▶️ Reflejar filtros en la URL
   useEffect(() => {
@@ -190,18 +377,17 @@ export default function AgendaDiariaPage() {
   const irAHoy = () => setFechaActual(new Date().toISOString().split("T")[0]);
 
   // Filtros en cliente (horario/estado)
-  let turnosFiltrados = [...turnos];
-  if (filtroTurno === "maniana") {
-    turnosFiltrados = turnosFiltrados.filter((t) => {
-      const h = new Date(t.inicio).getHours();
-      return h >= 8 && h < 12;
-    });
-  } else if (filtroTurno === "tarde") {
-    turnosFiltrados = turnosFiltrados.filter((t) => {
-      const h = new Date(t.inicio).getHours();
-      return h >= 12 && h <= 18;
-    });
-  }
+  let turnosFiltrados = turnos.filter((t) => {
+    const h = new Date(t.inicio).getHours();
+
+    if (!filtroTurno || filtroTurno === "todos") return true;
+
+    const bloque = bloquesHorarios.find((b) => b.label === filtroTurno);
+    if (!bloque) return true;
+
+    return h >= bloque.inicio && h < bloque.fin;
+  });
+
   if (filtroEstado === "ocupados") {
     turnosFiltrados = turnosFiltrados.filter((t) => t.pacientes);
   } else if (filtroEstado === "libres") {
@@ -213,21 +399,19 @@ export default function AgendaDiariaPage() {
   const turnosLibres = totalTurnos - turnosOcupados;
 
   return (
-    //cambio aquí
     <main className="p-6">
       {/* Header */}
-      <div className="mb-6 bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+      <div className="mb-4 bg-white rounded-xl px-4 py-2 shadow-sm border border-gray-200">
         <div className="flex items-center justify-between">
-          <div>
+          <div className="text-gray-600 flex items-center gap-8">
             <h1 className="text-3xl font-bold text-gray-800 mb-2">Agenda Diaria</h1>
             {userData ? (
               <p className="text-gray-600 flex items-center gap-2">
                 <User className="w-5 h-5 text-[#6596d8]" />
-                {/* Si querés mostrar Apellido, Nombre lo podés partir, pero tu login trae nombre completo */}
                 <span className="font-semibold">{userData.nombre}</span>
-                {userData.rol && (
+                {userData.profesionNombre && (
                   <span className="text-sm bg-[#6596d8]/10 text-[#6596d8] px-2 py-1 rounded-full ml-2">
-                    {userData.rol}
+                    {userData.profesionNombre}
                   </span>
                 )}
                 {userData.rol?.toLowerCase() === "profesional" && !userData.profesionalId && (
@@ -253,7 +437,7 @@ export default function AgendaDiariaPage() {
 
       <div className="max-w-6xl mx-auto">
         {/* Navegación fechas */}
-        <div className="bg-white rounded-xl p-6 shadow-md mb-6 border border-gray-200">
+        <div className="bg-white rounded-xl p-2 shadow-md mb-4 border border-gray-200">
           <div className="flex items-center justify-between gap-4">
             <button
               onClick={() => cambiarDia(-1)}
@@ -282,82 +466,100 @@ export default function AgendaDiariaPage() {
           </div>
         </div>
 
-        {/* Filtros + stats */}
-        <div className="bg-white rounded-xl p-6 shadow-md mb-6 border border-gray-200">
-          <div className="flex items-center gap-2 mb-4">
-            <Filter className="w-5 h-5 text-[#6596d8]" />
-            <h3 className="font-semibold text-gray-700">Filtros</h3>
+        {/* Filtros + stats (colapsable) */}
+        <div className="bg-white rounded-xl px-4 py-2 shadow-md mb-4 border border-gray-200">
+          <button
+            onClick={() => setMostrarFiltros((prev) => !prev)}
+            className="w-full flex items-center justify-between text-left"
+          >
+            <div className="flex items-center gap-2">
+              <Filter className="w-5 h-5 text-[#6596d8]" />
+              <h3 className="font-semibold text-gray-700">Filtros</h3>
+            </div>
+            <ChevronDown
+              className={`w-5 h-5 text-gray-600 transform transition-transform duration-200 ${
+                mostrarFiltros ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+
+          <div
+            className={`transition-all duration-300 overflow-hidden ${
+              mostrarFiltros ? "max-h-[1000px] mt-4 opacity-100" : "max-h-0 opacity-0"
+            }`}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-[#6596d8]" />
+                  Fecha
+                </label>
+                <input
+                  type="date"
+                  value={fechaActual}
+                  onChange={(e) => setFechaActual(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 
+                          focus:ring-[#6596d8] focus:border-transparent transition-all duration-200"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-[#6596d8]" />
+                  Horario
+                </label>
+                <select
+                  value={filtroTurno}
+                  onChange={(e) => setFiltroTurno(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 
+                          focus:ring-[#6596d8] focus:border-transparent transition-all duration-200"
+                >
+                  <option value="todos">Todos</option>
+                  {bloquesHorarios.map((bloque) => (
+                    <option key={bloque.label} value={bloque.label}>
+                      {bloque.label} ({bloque.inicio}:00 - {bloque.fin}:00)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-[#6596d8]" />
+                  Estado
+                </label>
+                <select
+                  value={filtroEstado}
+                  onChange={(e) => setFiltroEstado(e.target.value as "todos" | "ocupados" | "libres")}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 
+                          focus:ring-[#6596d8] focus:border-transparent transition-all duration-200"
+                >
+                  <option value="todos">Todos los estados</option>
+                  <option value="ocupados">Ocupados</option>
+                  <option value="libres">Disponibles</option>
+                </select>
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-[#6596d8]" />
-                Fecha
-              </label>
-              <input
-                type="date"
-                value={fechaActual}
-                onChange={(e) => setFechaActual(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 
-                         focus:ring-[#6596d8] focus:border-transparent transition-all duration-200"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <Clock className="w-4 h-4 text-[#6596d8]" />
-                Horario
-              </label>
-              <select
-                value={filtroTurno}
-                onChange={(e) => setFiltroTurno(e.target.value as "todos" | "maniana" | "tarde")}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 
-                         focus:ring-[#6596d8] focus:border-transparent transition-all duration-200"
-              >
-                <option value="todos">Todos los horarios</option>
-                <option value="maniana">Mañana (8:00 - 12:00)</option>
-                <option value="tarde">Tarde (12:00 - 18:00)</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-[#6596d8]
-" />
-                Estado
-              </label>
-              <select
-                value={filtroEstado}
-                onChange={(e) => setFiltroEstado(e.target.value as "todos" | "ocupados" | "libres")}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 
-                         focus:ring-[#6596d8] focus:border-transparent transition-all duration-200"
-              >
-                <option value="todos">Todos los estados</option>
-                <option value="ocupados">Ocupados</option>
-                <option value="libres">Disponibles</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-2 00">
+          <div className="grid grid-cols-3 gap-4 pt-2 border-t border-gray-200 mt-2">
             <div className="text-center">
-              <p className="text-2xl font-bold text-gray-800">{totalTurnos}</p>
+              <p className="text-xl font-bold text-gray-800">{totalTurnos}</p>
               <p className="text-sm text-gray-600">Total turnos</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-blue-500">{turnosOcupados}</p>
+              <p className="text-xl font-bold text-blue-500">{turnosOcupados}</p>
               <p className="text-sm text-gray-600">Ocupados</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-green-500">{turnosLibres}</p>
+              <p className="text-xl font-bold text-green-500">{turnosLibres}</p>
               <p className="text-sm text-gray-600">Disponibles</p>
             </div>
           </div>
         </div>
 
         {/* Lista de turnos */}
-        <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+        <div className="bg-white rounded-xl p-4 shadow-md border border-gray-200">
           <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
             <Clock className="w-5 h-5 text-[#6596d8]" />
             Turnos del día
@@ -375,73 +577,170 @@ export default function AgendaDiariaPage() {
               </div>
             </div>
           ) : (
-            <div className="space-y-3">
-              {turnosFiltrados.length > 0 ? (
-                turnosFiltrados.map((turno) => {
-                  const ocupado = !!turno.pacientes;
-                  const colorGradient = getEstadoColor(turno.estado, ocupado);
-                  const horaFin =
-                    turno.fin ||
-                    (() => {
-                      const inicio = new Date(turno.inicio);
-                      inicio.setMinutes(inicio.getMinutes() + 30);
-                      return inicio.toISOString();
-                    })();
+            // En la sección de Lista de turnos, reemplazá todo el contenido dentro del div "space-y-3" con esto:
 
-                  return (
-                    <div
-                      key={turno.turno_id}
-                      onClick={() => setTurnoSeleccionado(turno)}
-                      className={`p-4 rounded-lg bg-gradient-to-r ${colorGradient} text-white shadow-sm 
-                               hover:shadow-lg transform transition-all duration-200 hover:scale-[1.01] 
-                               cursor-pointer`}
-                    >
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-4">
-                          <div className="bg-white/20 rounded-lg p-2">
-                            <Clock className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <p className="font-bold text-lg">
-                              {formatearHora(turno.inicio)} - {formatearHora(horaFin)}
-                            </p>
-                            {ocupado ? (
-                              <div>
-                                <p className="font-semibold">
-                                  {turno.pacientes?.apellido}, {turno.pacientes?.nombre}
-                                </p>
-                                {turno.pacientes?.documento && (
-                                  <p className="text-sm opacity-90">DNI: {turno.pacientes.documento}</p>
-                                )}
-                                {turno.obras_sociales && (
-                                  <p className="text-sm opacity-90">{turno.obras_sociales.nombre}</p>
-                                )}
+        <div className="space-y-3">
+          {turnosFiltrados.length > 0 ? (
+            (() => {
+              // Separar turnos confirmados
+              const turnosConfirmados = turnosFiltrados.filter(
+                (t) => t.estado === "confirmado"
+              );
+              const otrosTurnos = turnosFiltrados.filter(
+                (t) => t.estado !== "confirmado"
+              );
+
+              const filtrarTurnosPorHora = (turnos: typeof turnosFiltrados, inicio: number, fin: number) =>
+                turnos.filter((t) => {
+                  const h = new Date(t.inicio).getHours();
+                  return h >= inicio && h < fin;
+                });
+
+              return (
+                <>
+                  {/* Sección de Confirmados - Solo mostrar si hay */}
+                  {turnosConfirmados.length > 0 && (
+                    <>
+                      <div className="relative flex items-center my-4">
+                        <div className="flex-grow border-t border-indigo-400"></div>
+                        <span className="flex-shrink mx-4 text-indigo-600 font-semibold bg-indigo-50 px-3 py-1 rounded-full">
+                          🔵 Confirmados ({turnosConfirmados.length})
+                        </span>
+                        <div className="flex-grow border-t border-indigo-400"></div>
+                      </div>
+
+                      <div className="bg-indigo-50 rounded-lg p-3 mb-4">
+                        {turnosConfirmados.map((turno) => {
+                          const ocupado = !!turno.pacientes;
+                          const colorGradient = getEstadoColor(turno.estado, ocupado);
+                          const tiempoConfirmado = diferenciaConAhora(turno.fecha_confirmacion, ahora);
+                          const horaFin = turno.fin || (() => {
+                            const inicio = new Date(turno.inicio);
+                            inicio.setMinutes(inicio.getMinutes() + 30);
+                            return inicio.toISOString();
+                          })();
+
+                          return (
+                            <div
+                              key={turno.turno_id}
+                              onClick={() => setTurnoSeleccionado(turno)}
+                              className={`py-2 px-5 rounded-lg bg-gradient-to-r ${colorGradient} text-white shadow-sm 
+                                          hover:shadow-lg transform transition-all duration-200 hover:scale-[1.01] 
+                                          cursor-pointer mb-3`}
+                            >
+                              <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-4">
+                                  <div className="bg-white/20 rounded-lg p-2">
+                                    <Clock className="w-5 h-5" />
+                                  </div>
+                                  <div>
+                                    <p className="font-bold">
+                                      {formatearHora(turno.inicio)} - {formatearHora(horaFin)}
+                                    </p>
+                                    <p className="font-semibold text-sm">
+                                      {turno.pacientes?.apellido}, {turno.pacientes?.nombre}. DNI:{" "}
+                                      {turno.pacientes?.documento}. OS:{" "}
+                                      {turno.pacientes?.obras_sociales?.nombre || "Particular"}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="text-right flex gap-1">
+                                  <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-sm font-medium">
+                                    {tiempoConfirmado}
+                                  </span>
+                                  <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-sm font-medium">
+                                    {getEstadoLabel(turno.estado)}
+                                  </span>
+                                </div>
                               </div>
-                            ) : (
-                              <p className="font-medium opacity-90">Turno disponible</p>
-                            )}
-                          </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+
+                  {/* Resto de turnos por horario */}
+                  {bloquesHorarios.map((bloque) => {
+                    const turnosBloque = filtrarTurnosPorHora(otrosTurnos, bloque.inicio, bloque.fin);
+                    if (turnosBloque.length === 0) return null;
+
+                    return (
+                      <React.Fragment key={bloque.label}>
+                        <div className="relative flex items-center my-4">
+                          <div className="flex-grow border-t border-gray-300"></div>
+                          <span className="flex-shrink mx-4 text-gray-600 font-semibold">
+                            {bloque.label} ({bloque.inicio}:00 - {bloque.fin}:00)
+                          </span>
+                          <div className="flex-grow border-t border-gray-300"></div>
                         </div>
 
-                        {ocupado && (
-                          <div className="text-right">
-                            <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-sm font-medium">
-                              {getEstadoLabel(turno.estado)}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="text-center py-12">
-                  <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500 text-lg">No hay turnos programados para esta fecha</p>
-                  <p className="text-gray-400 text-sm mt-2">Probá con otra fecha o ajustá los filtros</p>
-                </div>
-              )}
+                        {turnosBloque.map((turno) => {
+                          const ocupado = !!turno.pacientes;
+                          const colorGradient = getEstadoColor(turno.estado, ocupado);
+                          const horaFin = turno.fin || (() => {
+                            const inicio = new Date(turno.inicio);
+                            inicio.setMinutes(inicio.getMinutes() + 30);
+                            return inicio.toISOString();
+                          })();
+
+                          return (
+                            <div
+                              key={turno.turno_id}
+                              onClick={() => setTurnoSeleccionado(turno)}
+                              className={`py-2 px-5 rounded-lg bg-gradient-to-r ${colorGradient} text-white shadow-sm 
+                                          hover:shadow-lg transform transition-all duration-200 hover:scale-[1.01] 
+                                          cursor-pointer`}
+                            >
+                              <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-4">
+                                  <div className="bg-white/20 rounded-lg p-2">
+                                    <Clock className="w-5 h-5" />
+                                  </div>
+                                  <div>
+                                    <p className="font-bold">
+                                      {formatearHora(turno.inicio)} - {formatearHora(horaFin)}
+                                    </p>
+                                    {ocupado ? (
+                                      <p className="font-semibold text-sm">
+                                        {turno.pacientes?.apellido}, {turno.pacientes?.nombre}. DNI:{" "}
+                                        {turno.pacientes?.documento}. OS:{" "}
+                                        {turno.pacientes?.obras_sociales?.nombre || "Particular"}
+                                      </p>
+                                    ) : (
+                                      <p className="font-medium text-sm opacity-90">
+                                        Turno disponible
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className="text-right">
+                                  <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-sm font-medium">
+                                    {getEstadoLabel(turno.estado)}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </React.Fragment>
+                    );
+                  })}
+                </>
+              );
+            })()
+          ) : (
+            <div className="text-center py-12">
+              <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 text-lg">No hay turnos programados para esta fecha</p>
+              <p className="text-gray-400 text-sm mt-2">
+                Probá con otra fecha o ajustá los filtros
+              </p>
             </div>
+          )}
+        </div>
           )}
         </div>
       </div>
@@ -450,7 +749,7 @@ export default function AgendaDiariaPage() {
       {turnoSeleccionado && (
         <div className="fixed inset-0 bg-transparent backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex justify-between items-center mb-4">
               <h3 className="text-2xl font-bold text-gray-800">Detalle del Turno</h3>
               <button
                 onClick={() => setTurnoSeleccionado(null)}
@@ -487,11 +786,11 @@ export default function AgendaDiariaPage() {
                 </p>
               </div>
 
-              {turnoSeleccionado.obras_sociales && (
+              {turnoSeleccionado.pacientes?.obras_sociales && (
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Obra Social</p>
                   <p className="font-semibold text-gray-800">
-                    {turnoSeleccionado.obras_sociales.nombre}
+                    {turnoSeleccionado.pacientes?.obras_sociales.nombre}
                   </p>
                 </div>
               )}
@@ -524,13 +823,55 @@ export default function AgendaDiariaPage() {
                 </span>
               </div>
             </div>
+            <div className="mt-6 space-y-3">
+              {/* Botón de Atender Consulta - Solo para turnos confirmados */}
+              {turnoSeleccionado.estado === "confirmado" && turnoSeleccionado.pacientes && (
+                  <button
+                    onClick={async () => {
+                      const pacienteId = turnoSeleccionado.paciente_id;
+                      const turnoId = turnoSeleccionado.turno_id;
+                      
+                      if (!pacienteId) {
+                        alert('Error: No se pudo obtener el ID del paciente');
+                        return;
+                      }
 
-            <div className="mt-6">
+                      try {
+                        // Cambiar estado del turno a "en_consulta"
+                        const res = await fetch(`/api/turnos/${turnoId}`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ estado: 'en_consulta' })
+                        });
+
+                        if (!res.ok) {
+                          throw new Error('Error al actualizar el estado del turno');
+                        }
+
+                        // Redirigir a la historia clínica
+                        router.push(`/pacientesP/${pacienteId}/historia?turno_id=${turnoId}`);
+                      } catch (error) {
+                        alert('❌ Error al iniciar la consulta: ' + (error as Error).message);
+                      }
+                    }}
+                    className="w-full px-4 py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white 
+                            rounded-lg hover:from-indigo-600 hover:to-indigo-700 font-semibold 
+                            transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]
+                            flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    Atender Consulta
+                  </button>
+                )}
+
               <button
                 onClick={() => setTurnoSeleccionado(null)}
                 className="w-full px-4 py-3 bg-gradient-to-r from-[#6596d8] to-[#b5e4e6] text-white 
-                         rounded-lg hover:from-[#2e75d4] hover:to-[#8ddee1] font-semibold 
-                         transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                        rounded-lg hover:from-[#2e75d4] hover:to-[#8ddee1] font-semibold 
+                        transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
               >
                 Cerrar
               </button>
