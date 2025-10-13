@@ -79,6 +79,7 @@ export default function HistoriasPage() {
   const [historias, setHistorias] = useState<HistoriaClinica[]>([]);
   const [historiaSeleccionada, setHistoriaSeleccionada] = useState<HistoriaClinica | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchHistorias = async () => {
@@ -94,6 +95,20 @@ export default function HistoriasPage() {
     };
     fetchHistorias();
   }, []);
+
+  // Filtro de búsqueda por nombre, apellido o DNI
+  const historiasFiltradas = historias.filter((h) => {
+    const term = searchTerm.toLowerCase();
+    const nombre = h.pacientes.nombre.toLowerCase();
+    const apellido = h.pacientes.apellido.toLowerCase();
+    const dni = h.pacientes.documento.toLowerCase();
+
+    return (
+      nombre.includes(term) ||
+      apellido.includes(term) ||
+      dni.includes(term)
+    );
+  });
 
   return (
     <main className="p-6 bg-gradient-to-br from-orange-50 to-yellow-50 min-h-screen">
@@ -115,13 +130,28 @@ export default function HistoriasPage() {
           Pacientes con historia clínica
         </h3>
 
+        {/* Buscador */}
+        <div className="mb-4">
+          <input
+            type="text"
+            placeholder="Buscar por nombre, apellido o DNI..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full md:w-1/2 px-4 py-2 border border-gray-300 rounded-lg
+                       focus:outline-none focus:ring-2 focus:ring-sky-400
+                       placeholder-gray-400 text-gray-700"
+          />
+        </div>
+
         {isLoading ? (
           <div className="text-center py-12 text-gray-500">Cargando historias...</div>
         ) : historias.length === 0 ? (
           <div className="text-center py-12 text-gray-500">No hay historias clínicas registradas.</div>
+        ) : historiasFiltradas.length === 0 ? (
+          <div className="text-center py-12 text-gray-500">No se encontraron coincidencias.</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {historias.map((historia) => (
+            {historiasFiltradas.map((historia) => (
               <div
                 key={historia.historia_id}
                 onClick={() => setHistoriaSeleccionada(historia)}
@@ -165,6 +195,7 @@ export default function HistoriasPage() {
             </div>
 
             {/* Datos del paciente */}
+<<<<<<< Updated upstream:app/(recepcion)/historias/page.tsx
               <h4 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
                 <User className="w-5 h-5 text-orange-400" />
                 Datos del paciente
@@ -181,8 +212,58 @@ export default function HistoriasPage() {
                   <p><strong>Estado civil:</strong> {historiaSeleccionada.estado_civil || 'No especificado'}</p>
                   <p><strong>Ocupación:</strong> {historiaSeleccionada.ocupacion || 'No registrada'}</p>
                 </div>
-              </div>
+=======
+            <h4 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
+              <User className="w-5 h-5 text-gray-600" />
+              Datos del paciente
+            </h4>
 
+            <div className="bg-gray-100 p-4 rounded-xl border border-gray-200">
+              <p className="font-semibold text-gray-800 text-lg">
+                {historiaSeleccionada.pacientes.apellido}, {historiaSeleccionada.pacientes.nombre}
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 text-sm text-gray-700 mt-2">
+                <p><strong>DNI:</strong> {historiaSeleccionada.pacientes.documento}</p>
+                <p><strong>Sexo:</strong> {historiaSeleccionada.sexo || 'No registrado'}</p>
+                <p><strong>Grupo sanguíneo:</strong> {historiaSeleccionada.grupo_sanguineo || 'No registrado'}</p>
+                <p><strong>Estado civil:</strong> {historiaSeleccionada.estado_civil || 'No especificado'}</p>
+                <p><strong>Ocupación:</strong> {historiaSeleccionada.ocupacion || 'No registrada'}</p>
+              </div>
+            </div>
+
+            {/* Secciones médicas */}
+            <section className="mt-4">
+              <h4 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <User className="w-5 h-5 text-gray-600" />
+                Antecedentes Médicos y Hábitos
+              </h4>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm text-gray-700 bg-gray-100 p-4 rounded-xl border border-gray-200">
+                <p><span className="font-medium">Enfermedades de la infancia:</span> {historiaSeleccionada.enfermedades_infancia || 'No registradas'}</p>
+                <p><span className="font-medium">Enfermedades crónicas:</span> {historiaSeleccionada.enfermedades_cronicas || 'No registradas'}</p>
+                <p><span className="font-medium">Cirugías:</span> {historiaSeleccionada.cirugias || 'No registradas'}</p>
+                <p><span className="font-medium">Hospitalizaciones:</span> {historiaSeleccionada.hospitalizaciones || 'No registradas'}</p>
+                <p><span className="font-medium">Traumatismos:</span> {historiaSeleccionada.traumatismos || 'No registrados'}</p>
+                <p><span className="font-medium">Medicamentos actuales:</span> {historiaSeleccionada.medicamentos_actuales || 'No registrados'}</p>
+                <p><span className="font-medium">Consume tabaco:</span> {historiaSeleccionada.consume_tabaco ? 'Sí' : 'No'}</p>
+                <p><span className="font-medium">Consume alcohol:</span> {historiaSeleccionada.consume_alcohol ? 'Sí' : 'No'}</p>
+                <p><span className="font-medium">Otras sustancias:</span> {historiaSeleccionada.otras_sustancias || 'No registradas'}</p>
+                <p><span className="font-medium">Dieta adecuada:</span> {historiaSeleccionada.dieta_ok ? 'Sí' : 'No'}</p>
+
+                {historiaSeleccionada.actividad_fisica?.descripcion && (
+                  <p><span className="font-medium">Actividad física:</span> {historiaSeleccionada.actividad_fisica.descripcion}</p>
+                )}
+                {historiaSeleccionada.habitos_sueno?.descripcion && (
+                  <p><span className="font-medium">Hábitos de sueño:</span> {historiaSeleccionada.habitos_sueno.descripcion}</p>
+                )}
+                {historiaSeleccionada.alergias && (
+                  <p><span className="font-medium">Alergias:</span> {historiaSeleccionada.alergias}</p>
+                )}
+>>>>>>> Stashed changes:app/(profesional)/historias/page.tsx
+              </div>
+            </section>
+
+<<<<<<< Updated upstream:app/(recepcion)/historias/page.tsx
               {/* Secciones médicas */}
               <section className="mt-4">
                 <h4 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
@@ -283,16 +364,83 @@ export default function HistoriasPage() {
                         </div>
                       ) : (
                         <p className="text-sm text-gray-400 mt-2">Sin pruebas registradas</p>
+=======
+            {/* Consultas */}
+            <section>
+              <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-gray-600" /> Consultas
+              </h4>
+
+              {historiaSeleccionada.consultas.length ? (
+                historiaSeleccionada.consultas.map((consulta) => (
+                  <div
+                    key={consulta.consulta_id}
+                    className="border border-gray-200 rounded-xl p-4 mb-4 bg-gray-50/60 hover:bg-gray-200/60 transition-colors"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2">
+                      <p className="text-gray-800 font-semibold">
+                        {new Date(consulta.fecha_consulta).toLocaleDateString('es-AR')}
+                      </p>
+                      {consulta.profesionales && (
+                        <p className="text-sm text-gray-500">
+                          Dr. {consulta.profesionales.usuarios.apellido} {consulta.profesionales.usuarios.nombre}
+                        </p>
+>>>>>>> Stashed changes:app/(profesional)/historias/page.tsx
                       )}
                     </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-gray-500">No hay consultas registradas.</p>
-                )}
-              </section>
+
+                    <div className="text-sm text-gray-700 space-y-1">
+                      <p><span className="font-medium">Motivo:</span> {consulta.motivo_consulta}</p>
+                      {consulta.enfermedad_actual && (
+                        <p><span className="font-medium">Enfermedad actual:</span> {consulta.enfermedad_actual}</p>
+                      )}
+                      {consulta.notas_evolucion && (
+                        <p><span className="font-medium">Evolución:</span> {consulta.notas_evolucion}</p>
+                      )}
+                    </div>
+
+                    {/* Diagnósticos */}
+                    {consulta.diagnosticos?.length ? (
+                      <div className="mt-3 pl-3 border-l-2 border-gray-200 space-y-1">
+                        <p className="font-semibold text-sm text-gray-800">Diagnósticos</p>
+                        {consulta.diagnosticos.map((diag) => (
+                          <div key={diag.diagnostico_id} className="text-sm text-gray-700">
+                            {diag.juicio_clinico && <p>• Juicio: {diag.juicio_clinico}</p>}
+                            {diag.indicacion_terapeutica && <p>• Terapéutica: {diag.indicacion_terapeutica}</p>}
+                            {diag.pronostico && <p>• Pronóstico: {diag.pronostico}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-400 mt-2">Sin diagnósticos</p>
+                    )}
+
+                    {/* Pruebas complementarias */}
+                    {consulta.pruebas_complementarias?.length ? (
+                      <div className="mt-3 pl-3 border-l-2 border-gray-200 space-y-1">
+                        <p className="font-semibold text-sm text-gray-800">Pruebas complementarias</p>
+                        {consulta.pruebas_complementarias.map((prueba) => (
+                          <div key={prueba.prueba_id} className="text-sm text-gray-700">
+                            <p>• {prueba.tipo_prueba.toUpperCase()}: {prueba.descripcion}</p>
+                            <a href={prueba.url_archivo} target="_blank" className="text-orange-500 underline">
+                              Ver archivo
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-400 mt-2">Sin pruebas registradas</p>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500">No hay consultas registradas.</p>
+              )}
+            </section>
           </div>
         </div>
       )}
     </main>
   );
 }
+
