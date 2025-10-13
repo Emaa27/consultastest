@@ -57,10 +57,22 @@ export async function PATCH(
       );
     }
 
+    let data = {
+      estado: estado,
+    };
+    // Si el nuevo estado del turno es "confirmado" -->
+    if (estado == "confirmado"){
+      // Actualizar también la fecha de confirmación
+      data = {
+        estado: estado,
+        fecha_confirmacion: new Date(),
+      }
+    }
+
     // Actualizar el turno
     const turno = await prisma.turnos.update({
       where: { turno_id: id },
-      data: { estado },
+      data: data, // Defino data anteriormente que cambia según el nuevo estado del turno
       include: {
         pacientes: { include: { obras_sociales: true } },
         profesionales: { include: { usuarios: true, profesiones: true } },

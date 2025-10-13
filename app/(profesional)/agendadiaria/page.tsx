@@ -65,6 +65,7 @@ type Turno = {
   inicio: string;
   fin?: string;
   estado: EstadoTurno;
+  fecha_confirmacion: string;
   paciente_id?: number; // <- Agregá este campo que viene de la tabla turnos
   pacientes?: { 
     paciente_id: number; // <- Y este que viene de la tabla pacientes
@@ -117,6 +118,28 @@ function extraerHoraMinutos(timestampStr: string): { hora: number; minutos: numb
     hora: fecha.getUTCHours(), // Usar UTC porque los timestamps vienen en UTC
     minutos: fecha.getUTCMinutes()
   };
+}
+
+// Función que devuelve en formato mm:ss (o HH:mm:ss) la diferencia con la hora de ahora
+function diferenciaConAhora(fechaDesde: string, ahora = new Date()) {
+  const ms = ahora.getTime() - new Date(fechaDesde).getTime();
+  const totalSeconds = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return [
+      hours.toString().padStart(2, "0"),
+      minutes.toString().padStart(2, "0"),
+      seconds.toString().padStart(2, "0"),
+    ].join(":");
+  } else {
+    return [
+      minutes.toString().padStart(2, "0"),
+      seconds.toString().padStart(2, "0"),
+    ].join(":");
+  }
 }
 
 const getEstadoColor = (estado: EstadoTurno, ocupado: boolean) => {
@@ -172,6 +195,15 @@ export default function AgendaDiariaPage() {
   const [turnoSeleccionado, setTurnoSeleccionado] = useState<Turno | null>(null);
   const [isLoadingTurnos, setIsLoadingTurnos] = useState(false);
 
+  const [ahora, setAhora] = useState(new Date());
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setAhora(new Date());
+    }, 1000);
+
+    return () => clearInterval(interval); // limpiar el intervalo al desmontar
+  }, []);
+
   // ▶️ Cargar usuario + profesionalId desde localStorage
   useEffect(() => {
     const stored = localStorage.getItem("user");
@@ -203,9 +235,6 @@ export default function AgendaDiariaPage() {
     .then((data) => {
       const turnosReales = Array.isArray(data.turnos) ? data.turnos : [];
       const agenda = Array.isArray(data.agenda) ? data.agenda : [];
-      
-      console.log("Agenda recibida:", agenda);
-      console.log("Turnos reales:", turnosReales);
 
       // Genero todos los posibles turnos vacíos en base a la agenda
       const turnosGenerados: Turno[] = [];
@@ -584,6 +613,7 @@ export default function AgendaDiariaPage() {
                         {turnosConfirmados.map((turno) => {
                           const ocupado = !!turno.pacientes;
                           const colorGradient = getEstadoColor(turno.estado, ocupado);
+                          const tiempoConfirmado = diferenciaConAhora(turno.fecha_confirmacion, ahora);
                           const horaFin = turno.fin || (() => {
                             const inicio = new Date(turno.inicio);
                             inicio.setMinutes(inicio.getMinutes() + 30);
@@ -615,7 +645,10 @@ export default function AgendaDiariaPage() {
                                   </div>
                                 </div>
 
-                                <div className="text-right">
+                                <div className="text-right flex gap-1">
+                                  <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-sm font-medium">
+                                    {tiempoConfirmado}
+                                  </span>
                                   <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-sm font-medium">
                                     {getEstadoLabel(turno.estado)}
                                   </span>

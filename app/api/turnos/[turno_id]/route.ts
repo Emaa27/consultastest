@@ -26,13 +26,15 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     }
 
     // Validar que el estado sea válido
-    const estadosValidos = ['disponible', 'reservado', 'confirmado', 'confirmado', 'en_consulta', 'atendido', 'cancelado', 'ausente'];
+    const estadosValidos = ['disponible', 'reservado', 'confirmado', 'en_consulta', 'atendido', 'cancelado', 'ausente'];
     if (!estadosValidos.includes(estado)) {
       return NextResponse.json(
         { error: `Estado inválido. Debe ser uno de: ${estadosValidos.join(', ')}` },
         { status: 400 }
       );
     }
+
+    console.log("nuevo estado:", estado);
 
     // Verificar que el turno existe
     const turnoExistente = await prisma.turnos.findUnique({
@@ -43,10 +45,32 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Turno no encontrado' }, { status: 404 });
     }
 
+    let data = {
+      estado: estado,
+    };
+    if (estado == "confirmado"){
+      data = {
+        estado: estado,
+        fecha_confirmacion: new Date(),
+      }
+    }
+    if (estado == "en_consulta"){
+      data = {
+        estado: estado,
+        fecha_en_consulta: new Date(),
+      }
+    }
+    if (estado == "atendido"){
+      data = {
+        estado: estado,
+        fecha_atendido: new Date(),
+      }
+    }
+
     // Actualizar el estado del turno
     const turnoActualizado = await prisma.turnos.update({
       where: { turno_id: turnoId },
-      data: { estado },
+      data: data,
       include: {
         pacientes: true,
         profesionales: {
