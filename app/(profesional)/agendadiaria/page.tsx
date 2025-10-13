@@ -58,7 +58,7 @@ const ChevronDown = ({ className }: { className?: string }) => (
 );
 
 // ── Tipos ──────────────────────────────────────────────────────────────────────
-type EstadoTurno = "disponible" | "reservado" | "recepcionado" | "en_consulta" | "atendido" | "ausente" | "cancelado";
+type EstadoTurno = "disponible" | "reservado" | "confirmado" | "en_consulta" | "atendido" | "ausente" | "cancelado";
 
 type Turno = {
   turno_id: number;
@@ -123,7 +123,7 @@ const getEstadoColor = (estado: EstadoTurno, ocupado: boolean) => {
   if (!ocupado) return "from-gray-500 to-gray-500"; // Disponible - verde más claro
   const colors: Record<string, string> = {
     reservado: "from-sky-500 to-sky-600",
-    recepcionado: "from-indigo-500 to-indigo-600",
+    confirmado: "from-indigo-500 to-indigo-600",
     en_consulta: "from-amber-500 to-orange-600",
     atendido: "from-emerald-600 to-green-700", // Atendido - verde más oscuro
     ausente: "from-gray-700 to-gray-800",
@@ -136,7 +136,7 @@ const getEstadoLabel = (estado: EstadoTurno) => {
   const labels: Record<string, string> = {
     disponible: "Disponible",
     reservado: "Reservado",
-    recepcionado: "En recepción",
+    confirmado: "Confirmado",
     en_consulta: "En consulta",
     atendido: "Atendido",
     ausente: "No asistió",
@@ -553,12 +553,12 @@ export default function AgendaDiariaPage() {
         <div className="space-y-3">
           {turnosFiltrados.length > 0 ? (
             (() => {
-              // Separar turnos recepcionados
-              const turnosRecepcionados = turnosFiltrados.filter(
-                (t) => t.estado === "recepcionado"
+              // Separar turnos confirmados
+              const turnosConfirmados = turnosFiltrados.filter(
+                (t) => t.estado === "confirmado"
               );
               const otrosTurnos = turnosFiltrados.filter(
-                (t) => t.estado !== "recepcionado"
+                (t) => t.estado !== "confirmado"
               );
 
               const filtrarTurnosPorHora = (turnos: typeof turnosFiltrados, inicio: number, fin: number) =>
@@ -569,19 +569,19 @@ export default function AgendaDiariaPage() {
 
               return (
                 <>
-                  {/* Sección de Recepcionados - Solo mostrar si hay */}
-                  {turnosRecepcionados.length > 0 && (
+                  {/* Sección de Confirmados - Solo mostrar si hay */}
+                  {turnosConfirmados.length > 0 && (
                     <>
                       <div className="relative flex items-center my-4">
                         <div className="flex-grow border-t border-indigo-400"></div>
                         <span className="flex-shrink mx-4 text-indigo-600 font-semibold bg-indigo-50 px-3 py-1 rounded-full">
-                          🔵 Recepcionados ({turnosRecepcionados.length})
+                          🔵 Confirmados ({turnosConfirmados.length})
                         </span>
                         <div className="flex-grow border-t border-indigo-400"></div>
                       </div>
 
                       <div className="bg-indigo-50 rounded-lg p-3 mb-4">
-                        {turnosRecepcionados.map((turno) => {
+                        {turnosConfirmados.map((turno) => {
                           const ocupado = !!turno.pacientes;
                           const colorGradient = getEstadoColor(turno.estado, ocupado);
                           const horaFin = turno.fin || (() => {
@@ -791,9 +791,8 @@ export default function AgendaDiariaPage() {
               </div>
             </div>
             <div className="mt-6 space-y-3">
-              {/* Botón de Atender Consulta - Solo para turnos recepcionados */}
-              {/* Botón de Atender Consulta - Solo para turnos recepcionados */}
-              {turnoSeleccionado.estado === "recepcionado" && turnoSeleccionado.pacientes && (
+              {/* Botón de Atender Consulta - Solo para turnos confirmados */}
+              {turnoSeleccionado.estado === "confirmado" && turnoSeleccionado.pacientes && (
                   <button
                     onClick={async () => {
                       const pacienteId = turnoSeleccionado.paciente_id;

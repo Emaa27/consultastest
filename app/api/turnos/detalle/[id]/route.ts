@@ -50,9 +50,9 @@ export async function PATCH(
     const { estado } = body;
 
     // Validar que el estado sea uno de los permitidos
-    if (!estado || !["recepcionado", "ausente", "cancelado"].includes(estado)) {
+    if (!estado || !["confirmado", "ausente", "cancelado"].includes(estado)) {
       return NextResponse.json(
-        { error: "Estado inválido. Solo se permite 'recepcionado', 'ausente' o 'cancelado'" },
+        { error: "Estado inválido. Solo se permite 'confirmado', 'ausente' o 'cancelado'" },
         { status: 400 }
       );
     }

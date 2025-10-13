@@ -55,7 +55,7 @@ const ArrowLeft = ({ className }: { className?: string }) => (
 // Mapeo de estados a colores y etiquetas
 const estadoConfig: Record<string, { label: string; color: string; bgColor: string }> = {
   reservado: { label: 'Reservado', color: 'text-blue-700', bgColor: 'bg-blue-100' },
-  recepcionado: { label: 'Recepcionado', color: 'text-indigo-700', bgColor: 'bg-indigo-100' },
+  confirmado: { label: 'Confirmado', color: 'text-indigo-700', bgColor: 'bg-indigo-100' },
   en_consulta: { label: 'En Consulta', color: 'text-purple-700', bgColor: 'bg-purple-100' },
   atendido: { label: 'Atendido', color: 'text-green-700', bgColor: 'bg-green-100' },
   ausente: { label: 'Ausente', color: 'text-yellow-700', bgColor: 'bg-yellow-100' },
@@ -221,7 +221,7 @@ export default function HistorialTurnosPage() {
             >
               <option value="">Todos</option>
               <option value="reservado">Reservado</option>
-              <option value="recepcionado">Recepcionado</option>
+              <option value="confirmado">Confirmado</option>
               <option value="en_consulta">En Consulta</option>
               <option value="atendido">Atendido</option>
               <option value="ausente">Ausente</option>

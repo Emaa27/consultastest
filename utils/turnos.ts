@@ -20,7 +20,7 @@ export const addDays = (date: Date, days: number) => {
 
 export type EstadoTurno =
   | "reservado"
-  | "recepcionado"
+  | "confirmado"
   | "en_consulta"
   | "atendido"
   | "ausente"
@@ -28,7 +28,7 @@ export type EstadoTurno =
 
 const estadoGradients: Record<EstadoTurno | "default", string> = {
   reservado:    "from-sky-500 to-sky-600",
-  recepcionado: "from-indigo-500 to-indigo-600",
+  confirmado: "from-indigo-500 to-indigo-600",
   en_consulta:  "from-amber-500 to-orange-600",
   atendido:     "from-emerald-500 to-green-600",
   ausente:      "from-red-400 to-red-600",

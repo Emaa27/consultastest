@@ -6,7 +6,7 @@ type Item = { id: string; label: string; dotClass: string };
 
 const ITEMS: Item[] = [
   { id: "reservado",     label: "Reservado",     dotClass: "from-sky-500 to-sky-600" },
-  { id: "recepcionado",  label: "Recepcionado",  dotClass: "from-indigo-500 to-indigo-600" },
+  { id: "confirmado",  label: "Confirmado",  dotClass: "from-indigo-500 to-indigo-600" },
   { id: "en-consulta",   label: "En consulta",   dotClass: "from-amber-500 to-orange-600" },
   { id: "atendido",      label: "Atendido",      dotClass: "from-emerald-500 to-green-600" },
   { id: "ausente",       label: "Ausente",       dotClass: "from-red-400 to-red-600" },

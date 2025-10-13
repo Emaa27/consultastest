@@ -81,7 +81,7 @@ export async function GET(req: Request) {
           tipo = "cancelado";
           break;
         case "reservado":
-        case "recepcionado":
+        case "confirmado":
           descripcion = `Se **agendó** turno para **${paciente}** con ${profesional} (${horaInicio}).`;
           tipo = "agendado";
           break;
