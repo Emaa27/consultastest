@@ -2,32 +2,15 @@ import React from 'react';
 import { X } from 'lucide-react';
 import { AntecedentesForm } from './AntecedentesForm';
 import { AntecedentesReadOnly } from './AntecedentesReadOnly';
-
-type HistoriaClinicaBase = {
-  historia_id: number;
-  paciente_id: number;
-  medico_cabecera_id: number | null;
-  sexo: string | null;
-  grupo_sanguineo: string | null;
-  estado_civil: string | null;
-  ocupacion: string | null;
-  enfermedades_infancia: string | null;
-  enfermedades_cronicas: string | null;
-  cirugias: string | null;
-  alergias: string | null;
-  medicamentos_actuales: string | null;
-  consume_tabaco: boolean;
-  consume_alcohol: boolean;
-  actividad_fisica: string | null;
-};
+import { HistoriaClinicaBase } from '@/lib/types';
 
 type AntecedentesModalProps = {
   isOpen: boolean;
   onClose: () => void;
   data: HistoriaClinicaBase;
-  onSubmit: (data: HistoriaClinicaBase) => void;
+  onSubmit: (data: HistoriaClinicaBase) => Promise<void>;
   isLoading: boolean;
-  profesionNombre?: string; // AGREGAR ESTA LÍNEA
+  profesionNombre?: string;
 };
 
 export const AntecedentesModal = ({ 
@@ -36,10 +19,12 @@ export const AntecedentesModal = ({
   data, 
   onSubmit, 
   isLoading,
-  profesionNombre // AGREGAR AQUÍ
+  profesionNombre
 }: AntecedentesModalProps) => {
   const [isEditing, setIsEditing] = React.useState(false);
-  const puedeEditarAntecedentes = profesionNombre === "Clínico"; // AGREGAR ESTA LÍNEA
+  
+  // Control de acceso: solo médicos clínicos pueden editar antecedentes
+  const puedeEditarAntecedentes = profesionNombre === "Clínico";
 
   if (!isOpen) return null;
 
@@ -47,7 +32,7 @@ export const AntecedentesModal = ({
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header con botón cerrar */}
-        <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
+        <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center z-10">
           <h2 className="text-2xl font-bold bg-gradient-to-r from-[#2e75d4] to-[#8ddee1] bg-clip-text text-transparent">
             📋 Antecedentes Médicos
           </h2>
@@ -74,18 +59,22 @@ export const AntecedentesModal = ({
           ) : (
             <>
               <AntecedentesReadOnly data={data} />
-              <div className="mt-6 flex justify-end">
+              
+              <div className="mt-6 flex justify-end gap-3">
                 {puedeEditarAntecedentes ? (
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="px-6 py-3 bg-gradient-to-r from-[#2e75d4] to-[#6596d8] text-white font-bold rounded-lg hover:from-[#2560b8] hover:to-[#5585c7] transition-all shadow-lg"
+                    className="px-6 py-3 bg-gradient-to-r from-[#2e75d4] to-[#6596d8] text-white font-bold rounded-lg hover:from-[#2560b8] hover:to-[#5585c7] transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                   >
-                    {data.grupo_sanguineo ? 'Editar' : 'Completar Información'}
+                    {data.grupo_sanguineo ? '✏️ Editar' : '📝 Completar Información'}
                   </button>
                 ) : (
-                  <p className="text-sm text-gray-500 italic">
-                    Solo el médico clínico puede editar los antecedentes
-                  </p>
+                  <div className="px-4 py-3 bg-gray-100 rounded-lg border border-gray-200">
+                    <p className="text-sm text-gray-600 flex items-center gap-2">
+                      <span className="text-lg">🔒</span>
+                      <span>Solo el médico clínico puede editar los antecedentes</span>
+                    </p>
+                  </div>
                 )}
               </div>
             </>

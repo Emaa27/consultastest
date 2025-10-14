@@ -78,17 +78,40 @@ export const ConsultasList = ({ consultas, profesionalId, pacienteId }: Props) =
                         </p>
 
                         {diagnostico && (
-                            <>
-                                <p className="text-sm font-semibold text-gray-800">
-                                    Diagnóstico: {diagnostico.juicio_clinico}
-                                </p>
-                                {diagnostico.indicacion_terapeutica && (
-                                    <p className="text-xs text-gray-600 mt-1">
-                                        <strong>Plan:</strong> {diagnostico.indicacion_terapeutica}
+                        <>
+                            <p className="text-sm font-semibold text-gray-800">
+                            Diagnóstico: {diagnostico.juicio_clinico}
+                            </p>
+    
+                            {diagnostico.indicacion_terapeutica && (
+                            <p className="text-xs text-gray-600 mt-1">
+                            <strong>Plan:</strong> {diagnostico.indicacion_terapeutica}
+                            </p>
+                            )}
+                            {/* AGREGAR: Derivación */}
+                            {diagnostico.requiere_derivacion && (
+                                <div className="mt-2 p-2 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+                                    <p className="text-xs font-semibold text-yellow-800">🩺 Derivación a: {diagnostico.especialidad_derivacion}
                                     </p>
-                                )}
-                            </>
+                                </div>
+                            )}
+
+                            {/* AGREGAR: Medicamentos */}
+                            {diagnostico.medicamentos && diagnostico.medicamentos.length > 0 && (
+                            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
+                                 <p className="text-xs font-semibold text-blue-800 mb-2">💊 Medicamentos Recetados:</p>
+                                    {diagnostico.medicamentos.map((med: any, idx: number) => (
+                            <div key={idx} className="text-xs text-gray-700 mb-1 pl-2 border-l-2 border-blue-300">
+                                <p><strong>{med.droga}</strong></p>
+                                <p>Vía: {med.via_administracion} | Dosis: {med.dosis}</p>
+                                    {med.frecuencia && <p>Frecuencia: {med.frecuencia}</p>}
+                             </div>
+                            ))}
+                        </div>
                         )}
+                         </>
+                        )}
+
 
                         <div className="mt-3 pt-3 border-t">
                             <div className="flex justify-between items-center mb-2">

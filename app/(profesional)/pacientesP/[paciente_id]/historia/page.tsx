@@ -5,13 +5,19 @@ import { User, Clock, X, CheckCircle } from 'lucide-react';
 import { AntecedentesModal } from '@/components/historiaclinica/AntecedentesModal';
 import { NuevaConsultaModal } from '@/components/historiaclinica/NuevaConsultaModal';
 import { ConsultasList } from '@/components/historiaclinica/ConsultasList';
-import { HistoriaClinicaBase, HistoriaClinicaCompleta } from '@/lib/types';
-// ... todos tus types existentes ...
+import { HistoriaClinicaBase, HistoriaClinicaCompleta, ConsultaDetalle } from '@/lib/types';
 
-// CAMBIAR ESTA LÍNEA:
-// const PROFESIONAL_ID = 9;
+const calcularEdad = (fechaNacimiento: string): number => {
+  const hoy = new Date();
+  const nacimiento = new Date(fechaNacimiento);
+  let edad = hoy.getFullYear() - nacimiento.getFullYear();
+  const mes = hoy.getMonth() - nacimiento.getMonth();
+  if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+    edad--;
+  }
+  return edad;
+};
 
-// POR ESTO (obtener del localStorage/session):
 const getUserData = () => {
   if (typeof window === 'undefined') return null;
   const userData = localStorage.getItem('user');
@@ -26,7 +32,6 @@ export default function HistoriaClinicaPage({
   const resolvedParams = use(params);
   const pacienteId = parseInt(resolvedParams.paciente_id);
   
-  // AGREGAR ESTAS LÍNEAS:
   const [user, setUser] = useState<any>(null);
   const [consultaCreada, setConsultaCreada] = useState(false);
   const [turnoId, setTurnoId] = useState<number | null>(null);
@@ -37,7 +42,6 @@ export default function HistoriaClinicaPage({
   const [error, setError] = useState('');
   const [isFormLoading, setIsFormLoading] = useState(false);
   
-  // Estados para modales
   const [showAntecedentesModal, setShowAntecedentesModal] = useState(false);
   const [showConsultaModal, setShowConsultaModal] = useState(false);
   const [showHistorial, setShowHistorial] = useState(false);
@@ -48,14 +52,12 @@ export default function HistoriaClinicaPage({
       setUser(userData);
     }
     
-    // Si vienes desde un turno, obtener el turno_id de la URL
     const searchParams = new URLSearchParams(window.location.search);
     const turno = searchParams.get('turno_id');
     if (turno) {
       const id = parseInt(turno);
       setTurnoId(id);
       
-      // Obtener el estado del turno
       fetch(`/api/turnos/${id}`)
         .then(res => res.json())
         .then(data => {
@@ -167,7 +169,6 @@ export default function HistoriaClinicaPage({
         throw new Error(errorData.error || 'Falló el registro de la consulta');
       }
       
-      // AGREGAR ESTAS LÍNEAS:
       const result = await res.json();
       setConsultaCreada(true);
       
@@ -183,7 +184,7 @@ export default function HistoriaClinicaPage({
 
   const handleFinalizarConsulta = async () => {
     if (!turnoId) {
-      alert('❌ No se encontró un turno asociado a esta consulta');
+      alert('❌ No se encontró un turno asociado a esta Diagnóstico/Prácticas médicas.');
       return;
     }
 
@@ -214,7 +215,6 @@ export default function HistoriaClinicaPage({
       
       alert('✅ Consulta finalizada exitosamente. El turno ha sido marcado como atendido.');
       
-      // Redirigir a la agenda diaria
       window.location.href = '/agendadiaria';
       
     } catch (err) {
@@ -231,11 +231,13 @@ export default function HistoriaClinicaPage({
   if (error) return <div className="p-8 text-center text-xl text-red-600">Error: {error}</div>;
   if (!hcData) return <div className="p-8 text-center text-xl text-gray-500">Historia Clínica no encontrada.</div>;
 
+  // Convertir consultas a ConsultaDetalle si es necesario
+  const consultasDetalle: ConsultaDetalle[] = hcData.consultas as any;
+
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       {/* Header con información del paciente */}
       <div className="bg-gradient-to-r from-[#2e75d4] to-[#8ddee1] text-white rounded-xl shadow-lg p-6 relative">
-        {/* Botón cerrar */}
         <button
           onClick={() => window.history.back()}
           className="absolute top-4 right-4 p-2 hover:bg-white/20 rounded-full transition-colors"
@@ -259,24 +261,17 @@ export default function HistoriaClinicaPage({
               {hcData.pacientes && (
                 <div className="mt-2 space-y-1 text-white/90">
                   <p className="text-sm">
-                    <strong>DNI:</strong> {hcData.pacientes.documento} | 
-                    <strong className="ml-3">Género:</strong> {hcData.pacientes.genero || 'N/A'} |
-                    <strong className="ml-3">Fecha Nac.:</strong> {hcData.pacientes.fecha_nacimiento ? new Date(hcData.pacientes.fecha_nacimiento).toLocaleDateString('es-AR') : 'N/A'}
-                  </p>
+                  <strong>DNI:</strong> {hcData.pacientes.documento} | 
+                  <strong className="ml-3">Género:</strong> {hcData.pacientes.genero || 'N/A'} |
+                  <strong className="ml-3">Edad:</strong> {hcData.pacientes.fecha_nacimiento ? `${calcularEdad(hcData.pacientes.fecha_nacimiento)} años`: 'N/A'} </p>
                   <p className="text-sm">
-                    {hcData.pacientes.email && (
-                      <><strong>Email:</strong> {hcData.pacientes.email} | </>
-                    )}
-                    {hcData.pacientes.telefono && (
-                      <><strong>Tel:</strong> {hcData.pacientes.telefono}</>
-                    )}
+                  {hcData.pacientes.email && (<><strong>Email:</strong> {hcData.pacientes.email} | </> )} {hcData.pacientes.telefono && ( <><strong>Tel:</strong> {hcData.pacientes.telefono}</> )}
                   </p>
                 </div>
               )}
             </div>
           </div>
           
-          {/* MODIFICAR ESTE BLOQUE: */}
           <div className="bg-white/10 rounded-lg p-3 text-right">
             <p className="text-xs text-white/70 uppercase font-semibold">Profesional</p>
             <p className="text-sm font-medium mt-1">{user.nombre}</p>
@@ -310,7 +305,7 @@ export default function HistoriaClinicaPage({
           onClick={() => setShowConsultaModal(true)}
           className="flex-1 py-4 bg-gradient-to-r from-[#6596d8] to-[#8ddee1] text-white font-bold rounded-lg hover:from-[#5585c7] hover:to-[#7dcdd0] transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
         >
-          ➕ Registrar Nueva Consulta
+          ➕ Registrar Diagnóstico/Prácticas médicas
         </button>
         
         <button
@@ -326,11 +321,11 @@ export default function HistoriaClinicaPage({
           }
         >
           <CheckCircle className="w-5 h-5" />
-          {isFormLoading ? 'Finalizando...' : 'Finalizar Consulta'}
+          {isFormLoading ? 'Finalizando...' : 'Finalizar Turno'}
         </button>
       </div>
       
-      {/* Historial de Consultas - Desplegable */}
+      {/* Historial de Consultas */}
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
         <button
           onClick={() => setShowHistorial(!showHistorial)}
@@ -338,7 +333,7 @@ export default function HistoriaClinicaPage({
         >
           <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
             <Clock className="w-6 h-6 text-gray-600" /> 
-            Historial de Consultas ({hcData.consultas.length})
+            Historial de Diagnóstico/Prácticas médicas ({consultasDetalle.length})
           </h2>
           <span className={`text-2xl transform transition-transform ${showHistorial ? 'rotate-180' : ''}`}>
             ▼
@@ -347,11 +342,11 @@ export default function HistoriaClinicaPage({
         
         {showHistorial && (
           <div className="p-6 pt-0 border-t">
-            {hcData.consultas.length === 0 ? (
-              <p className="text-gray-500">Este paciente aún no tiene consultas registradas.</p>
+            {consultasDetalle.length === 0 ? (
+              <p className="text-gray-500">Este paciente aún no tiene Diagnóstico/Prácticas médicas.</p>
             ) : (
               <ConsultasList 
-                consultas={hcData.consultas} 
+                consultas={consultasDetalle} 
                 profesionalId={user.profesionalId}
                 pacienteId={pacienteId}
               />
@@ -359,6 +354,7 @@ export default function HistoriaClinicaPage({
           </div>
         )}
       </div>
+
       <AntecedentesModal
         isOpen={showAntecedentesModal}
         onClose={() => setShowAntecedentesModal(false)}

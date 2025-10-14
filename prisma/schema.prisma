@@ -164,20 +164,17 @@ model roles {
 }
 
 model turnos {
-  profesional_id     Int
-  paciente_id        Int
-  inicio             DateTime        @db.DateTime(0)
-  fin                DateTime?       @db.DateTime(0)
-  duracion_min       Int             @db.SmallInt
-  estado             turnos_estado   @default(reservado)
-  obra_social_id     Int?
-  turno_id           Int             @id @default(autoincrement())
-  fecha_confirmacion DateTime?       @db.DateTime(0)
-  fecha_en_consulta  DateTime?       @db.DateTime(0)
-  fecha_atendido     DateTime?       @db.DateTime(0)
-  pacientes          pacientes       @relation(fields: [paciente_id], references: [paciente_id], map: "FK_turnos_pacientes")
-  profesionales      profesionales   @relation(fields: [profesional_id], references: [profesional_id], map: "FK_turnos_profesionales")
-  obras_sociales     obras_sociales? @relation(fields: [obra_social_id], references: [obra_social_id], onDelete: Restrict, map: "fk_turno_os")
+  profesional_id Int
+  paciente_id    Int
+  inicio         DateTime        @db.DateTime(0)
+  fin            DateTime?       @db.DateTime(0)
+  duracion_min   Int             @db.SmallInt
+  estado         turnos_estado   @default(reservado)
+  obra_social_id Int?
+  turno_id       Int             @id @default(autoincrement())
+  pacientes      pacientes       @relation(fields: [paciente_id], references: [paciente_id], map: "FK_turnos_pacientes")
+  profesionales  profesionales   @relation(fields: [profesional_id], references: [profesional_id], map: "FK_turnos_profesionales")
+  obras_sociales obras_sociales? @relation(fields: [obra_social_id], references: [obra_social_id], onDelete: Restrict, map: "fk_turno_os")
 
   @@index([obra_social_id], map: "fk_turno_os")
   @@index([paciente_id, inicio], map: "ix_turnos_paciente")
@@ -200,19 +197,6 @@ model usuarios {
   @@index([rol_id], map: "fk_usuarios_rol")
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model medicamentos {
-  medicamento_id     Int                             @id @default(autoincrement())
-  diagnostico_id     Int
-  droga              String                          @db.VarChar(255)
-  via_administracion medicamentos_via_administracion @default(oral)
-  dosis              String                          @db.VarChar(100)
-  frecuencia         String?                         @db.VarChar(100)
-  diagnosticos       diagnosticos                    @relation(fields: [diagnostico_id], references: [diagnostico_id], onDelete: Cascade, map: "fk_medicamentos_diagnostico")
-
-  @@index([diagnostico_id], map: "idx_diagnostico")
-}
-
 model registro_auditoria {
   auditoria_id   Int       @id @default(autoincrement())
   consulta_id    Int
@@ -224,6 +208,19 @@ model registro_auditoria {
 
   @@index([consulta_id], map: "idx_regaud_consulta")
   @@index([id_editor], map: "idx_regaud_editor")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model medicamentos {
+  medicamento_id     Int                             @id @default(autoincrement())
+  diagnostico_id     Int
+  droga              String                          @db.VarChar(255)
+  via_administracion medicamentos_via_administracion @default(oral)
+  dosis              String                          @db.VarChar(100)
+  frecuencia         String?                         @db.VarChar(100)
+  diagnosticos       diagnosticos                    @relation(fields: [diagnostico_id], references: [diagnostico_id], onDelete: Cascade, map: "fk_medicamentos_diagnostico")
+
+  @@index([diagnostico_id], map: "idx_diagnostico")
 }
 
 enum profesionales_estado {
@@ -249,7 +246,7 @@ enum pacientes_estado {
 
 enum turnos_estado {
   reservado
-  confirmado
+  recepcionado
   en_consulta
   atendido
   ausente
