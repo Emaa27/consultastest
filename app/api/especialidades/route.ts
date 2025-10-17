@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from '@/lib/prisma';
 
-// ✅ GET - Listar especialidades
 export async function GET() {
   try {
     const especialidades = await prisma.profesiones.findMany({
@@ -17,7 +16,6 @@ export async function GET() {
   }
 }
 
-// ✅ POST - Registrar nueva especialidad
 export async function POST(request: Request) {
   try {
     const { nombre, descripcion } = await request.json();

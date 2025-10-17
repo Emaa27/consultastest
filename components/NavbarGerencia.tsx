@@ -99,7 +99,7 @@ const NavbarGerencia: React.FC = () => {
   const menuItems = [
   { id: 'metricas', label: 'Métricas', icon: BarChart, href: '/metricas' },
   { id: 'profesionales', label: 'Profesionales', icon: Users, href: '/gerencia/profesionales' },
-  { id: 'profesiones', label: 'Profesiones', icon: Briefcase, href: '/gerencia/profesiones' },
+  { id: 'profesiones', label: 'Profesiones', icon: Briefcase, href: '/especialidades' },
   { id: 'usuarios', label: 'Usuarios', icon: User, href: '/gerencia/usuarios' },
   { id: 'pacientes', label: 'Pacientes', icon: User, href: '/gerencia/pacientes' },
   { id: 'obras-sociales', label: 'Obras Sociales', icon: FileText, href: '/gerencia/obras-sociales' },
