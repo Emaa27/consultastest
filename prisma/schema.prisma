@@ -33,8 +33,6 @@ model consultas {
   frecuencia_cardiaca      Int?
   frecuencia_respiratoria  Int?
   temperatura              Decimal?                  @db.Decimal(4, 2)
-  peso                     Decimal?                  @db.Decimal(5, 2)
-  altura                   Decimal?                  @db.Decimal(3, 2)
   imc                      Decimal?                  @db.Decimal(4, 2)
   notas_evolucion          String?                   @db.Text
   nota_referencia          String?                   @db.Text
@@ -43,24 +41,28 @@ model consultas {
   profesionales            profesionales             @relation(fields: [profesional_id], references: [profesional_id])
   diagnosticos             diagnosticos[]
   pruebas_complementarias  pruebas_complementarias[]
+  registro_auditoria       registro_auditoria[]
 
   @@index([historia_id], map: "consultas_historia_id_fkey")
   @@index([profesional_id], map: "consultas_profesional_id_fkey")
 }
 
 model diagnosticos {
-  diagnostico_id            Int       @id @default(autoincrement())
+  diagnostico_id            Int            @id @default(autoincrement())
   consulta_id               Int
-  fecha_diagnostico         DateTime  @default(now()) @db.DateTime(0)
-  juicio_clinico            String?   @db.Text
-  diagnostico_presuntivo    String?   @db.Text
-  diagnostico_definitivo    String?   @db.Text
-  indicacion_terapeutica    String    @db.Text
-  tratamiento_farmacologico String?   @db.Text
-  plan_cuidados             String?   @db.Text
-  recomendaciones           String?   @db.Text
-  pronostico                String?   @db.VarChar(255)
-  consultas                 consultas @relation(fields: [consulta_id], references: [consulta_id], onDelete: Cascade)
+  fecha_diagnostico         DateTime       @default(now()) @db.DateTime(0)
+  juicio_clinico            String?        @db.Text
+  diagnostico_presuntivo    String?        @db.Text
+  diagnostico_definitivo    String?        @db.Text
+  indicacion_terapeutica    String         @db.Text
+  tratamiento_farmacologico String?        @db.Text
+  plan_cuidados             String?        @db.Text
+  recomendaciones           String?        @db.Text
+  pronostico                String?        @db.VarChar(255)
+  requiere_derivacion       Boolean        @default(false)
+  especialidad_derivacion   String?        @db.VarChar(255)
+  consultas                 consultas      @relation(fields: [consulta_id], references: [consulta_id], onDelete: Cascade)
+  medicamentos              medicamentos[]
 
   @@index([consulta_id], map: "diagnosticos_consulta_id_fkey")
 }
@@ -86,6 +88,8 @@ model historias_clinicas {
   habitos_sueno         historias_clinicas_habitos_sueno?
   medico_cabecera_id    Int?
   sexo                  String?                              @db.VarChar(20)
+  peso                  Decimal?                             @db.Decimal(5, 2)
+  altura                Decimal?                             @db.Decimal(3, 2)
   consultas             consultas[]
   profesionales         profesionales?                       @relation(fields: [medico_cabecera_id], references: [profesional_id])
   pacientes             pacientes                            @relation(fields: [paciente_id], references: [paciente_id])
@@ -160,17 +164,20 @@ model roles {
 }
 
 model turnos {
-  profesional_id Int
-  paciente_id    Int
-  inicio         DateTime        @db.DateTime(0)
-  fin            DateTime?       @db.DateTime(0)
-  duracion_min   Int             @db.SmallInt
-  estado         turnos_estado   @default(reservado)
-  obra_social_id Int?
-  turno_id       Int             @id @default(autoincrement())
-  pacientes      pacientes       @relation(fields: [paciente_id], references: [paciente_id], map: "FK_turnos_pacientes")
-  profesionales  profesionales   @relation(fields: [profesional_id], references: [profesional_id], map: "FK_turnos_profesionales")
-  obras_sociales obras_sociales? @relation(fields: [obra_social_id], references: [obra_social_id], onDelete: Restrict, map: "fk_turno_os")
+  profesional_id     Int
+  paciente_id        Int
+  inicio             DateTime        @db.DateTime(0)
+  fin                DateTime?       @db.DateTime(0)
+  duracion_min       Int             @db.SmallInt
+  estado             turnos_estado   @default(reservado)
+  obra_social_id     Int?
+  turno_id           Int             @id @default(autoincrement())
+  fecha_confirmacion DateTime?       @db.DateTime(0)
+  fecha_en_consulta  DateTime?       @db.DateTime(0)
+  fecha_atendido     DateTime?       @db.DateTime(0)
+  pacientes          pacientes       @relation(fields: [paciente_id], references: [paciente_id], map: "FK_turnos_pacientes")
+  profesionales      profesionales   @relation(fields: [profesional_id], references: [profesional_id], map: "FK_turnos_profesionales")
+  obras_sociales     obras_sociales? @relation(fields: [obra_social_id], references: [obra_social_id], onDelete: Restrict, map: "fk_turno_os")
 
   @@index([obra_social_id], map: "fk_turno_os")
   @@index([paciente_id, inicio], map: "ix_turnos_paciente")
@@ -178,18 +185,46 @@ model turnos {
 }
 
 model usuarios {
-  usuario_id    Int             @id @default(autoincrement())
-  nombre        String          @db.VarChar(120)
-  apellido      String          @db.VarChar(120)
-  email         String?         @unique(map: "email") @db.VarChar(120)
-  contrasena    String          @db.VarChar(100)
-  telefono      String?         @db.VarChar(40)
-  rol_id        Int
-  estado        usuarios_estado @default(activo)
-  profesionales profesionales?
-  roles         roles           @relation(fields: [rol_id], references: [rol_id], onUpdate: Restrict, map: "fk_usuarios_rol")
+  usuario_id         Int                  @id @default(autoincrement())
+  nombre             String               @db.VarChar(120)
+  apellido           String               @db.VarChar(120)
+  email              String?              @unique(map: "email") @db.VarChar(120)
+  dni                String?              @unique(map: "dni") @db.VarChar(20)
+  contrasena         String               @db.VarChar(100)
+  telefono           String?              @db.VarChar(40)
+  rol_id             Int
+  estado             usuarios_estado      @default(activo)
+  profesionales      profesionales?
+  registro_auditoria registro_auditoria[]
+  roles              roles                @relation(fields: [rol_id], references: [rol_id], onUpdate: Restrict, map: "fk_usuarios_rol")
 
   @@index([rol_id], map: "fk_usuarios_rol")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model medicamentos {
+  medicamento_id     Int                             @id @default(autoincrement())
+  diagnostico_id     Int
+  droga              String                          @db.VarChar(255)
+  via_administracion medicamentos_via_administracion @default(oral)
+  dosis              String                          @db.VarChar(100)
+  frecuencia         String?                         @db.VarChar(100)
+  diagnosticos       diagnosticos                    @relation(fields: [diagnostico_id], references: [diagnostico_id], onDelete: Cascade, map: "fk_medicamentos_diagnostico")
+
+  @@index([diagnostico_id], map: "idx_diagnostico")
+}
+
+model registro_auditoria {
+  auditoria_id   Int       @id @default(autoincrement())
+  consulta_id    Int
+  id_editor      Int
+  version_previa String?   @db.Text
+  timestamp      DateTime  @default(now()) @db.DateTime(0)
+  consultas      consultas @relation(fields: [consulta_id], references: [consulta_id], onDelete: Cascade, onUpdate: Restrict, map: "fk_regaud_consulta")
+  usuarios       usuarios  @relation(fields: [id_editor], references: [usuario_id], onUpdate: Restrict, map: "fk_regaud_editor")
+
+  @@index([consulta_id], map: "idx_regaud_consulta")
+  @@index([id_editor], map: "idx_regaud_editor")
 }
 
 enum profesionales_estado {
@@ -211,15 +246,6 @@ enum pruebas_complementarias_tipo_prueba {
 enum pacientes_estado {
   activo
   inactivo
-}
-
-enum turnos_estado {
-  reservado
-  recepcionado
-  en_consulta
-  atendido
-  ausente
-  cancelado
 }
 
 enum agenda_semanal_estado {
@@ -249,4 +275,22 @@ enum historias_clinicas_habitos_sueno {
   insuficiente
   normal
   excesivo
+}
+
+enum medicamentos_via_administracion {
+  oral
+  inyectable
+  topica
+  intravenosa
+  intramuscular
+  subcutanea
+}
+
+enum turnos_estado {
+  reservado
+  confirmado
+  en_consulta
+  atendido
+  ausente
+  cancelado
 }

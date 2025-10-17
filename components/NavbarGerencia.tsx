@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
-/* ---------- Íconos SVG ---------- */
 type IconProps = { className?: string };
 
 const Calendar = ({ className }: IconProps) => (
@@ -16,38 +15,36 @@ const Calendar = ({ className }: IconProps) => (
   </svg>
 );
 
-const UserPlus = ({ className }: IconProps) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-    <circle cx="8.5" cy="7" r="4"></circle>
-    <line x1="20" y1="8" x2="20" y2="14"></line>
-    <line x1="17" y1="11" x2="23" y2="11"></line>
-  </svg>
-);
-
-export const User = ({ className }: { className?: string }) => (
+const User = ({ className }: IconProps) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
     <circle cx="12" cy="7" r="4"></circle>
   </svg>
 );
 
-const Search = ({ className }: IconProps) => (
+const Users = ({ className }: IconProps) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <circle cx="11" cy="11" r="8"></circle>
-    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+    <circle cx="9" cy="7" r="4"></circle>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
   </svg>
 );
 
-const UserCheck = ({ className }: IconProps) => (
+const FileText = ({ className }: IconProps) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-    <circle cx="8.5" cy="7" r="4"></circle>
-    <polyline points="17,11 19,13 23,9"></polyline>
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
   </svg>
 );
 
-const BarChart3 = ({ className }: IconProps) => (
+const Briefcase = ({ className }: IconProps) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+    <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"></path>
+  </svg>
+);
+
+const BarChart = ({ className }: IconProps) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <line x1="12" y1="20" x2="12" y2="10"></line>
     <line x1="18" y1="20" x2="18" y2="4"></line>
@@ -78,8 +75,7 @@ const X = ({ className }: IconProps) => (
   </svg>
 );
 
-/* ---------- Componente (versión GERENTE en VERDE) ---------- */
-const NavbarGerente: React.FC = () => {
+const NavbarGerencia: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userName, setUserName] = useState('Gerente');
@@ -101,11 +97,14 @@ const NavbarGerente: React.FC = () => {
   }, []);
 
   const menuItems = [
-    { id: 'turnos', label: 'Metricas', icon: BarChart3, href: '/metricas' },
-    { id: 'pacientes', label: 'Pacientes', icon: User, href: '/gerencia/pacientes' },
-    { id: 'historial', label: 'Profesionales', icon: User, href: '/gerencia/buscar' },
-    { id: 'profesionales', label: 'Historial Turnos', icon: Calendar, href: '/historialturnos' },
-  ];
+  { id: 'metricas', label: 'Métricas', icon: BarChart, href: '/metricas' },
+  { id: 'profesionales', label: 'Profesionales', icon: Users, href: '/gerencia/profesionales' },
+  { id: 'profesiones', label: 'Profesiones', icon: Briefcase, href: '/gerencia/profesiones' },
+  { id: 'usuarios', label: 'Usuarios', icon: User, href: '/gerencia/usuarios' },
+  { id: 'pacientes', label: 'Pacientes', icon: User, href: '/gerencia/pacientes' },
+  { id: 'obras-sociales', label: 'Obras Sociales', icon: FileText, href: '/gerencia/obras-sociales' },
+  { id: 'historialturnos', label: 'Historial Turnos', icon: Calendar, href: '/historialturnos' },
+];
 
   const isActive = (href: string) =>
     href === '/' ? pathname === '/' : pathname?.startsWith(href);
@@ -176,7 +175,6 @@ const NavbarGerente: React.FC = () => {
                   </span>
                 )}
 
-                {/* Tooltip cuando está colapsado */}
                 {!isExpanded && (
                   <div className="absolute left-full ml-2 px-3 py-1 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
                     {label}
@@ -189,7 +187,6 @@ const NavbarGerente: React.FC = () => {
 
         {/* Usuario y Logout */}
         <div className="p-4 border-t border-gray-200 space-y-3">
-          {/* Info del usuario */}
           <div className={`flex items-center ${isExpanded ? 'px-3' : 'justify-center'} transition-all duration-300`}>
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#16a34a] to-[#86efac] flex items-center justify-center text-white font-bold flex-shrink-0">
               {getInitials(userName)}
@@ -202,7 +199,6 @@ const NavbarGerente: React.FC = () => {
             )}
           </div>
 
-          {/* Botón Logout */}
           <button
             type="button"
             onClick={handleLogout}
@@ -244,7 +240,7 @@ const NavbarGerente: React.FC = () => {
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40 pt-16"
           onClick={() => setIsMobileMenuOpen(false)}
         >
           <div className="fixed left-0 top-16 bottom-0 w-64 bg-white shadow-lg rounded-r-3xl" onClick={(e) => e.stopPropagation()}>
@@ -305,4 +301,4 @@ const NavbarGerente: React.FC = () => {
   );
 };
 
-export default NavbarGerente;
+export default NavbarGerencia;
