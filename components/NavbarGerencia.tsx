@@ -78,6 +78,14 @@ const X = ({ className }: IconProps) => (
   </svg>
 );
 
+const Especialidades = ({ className }: IconProps) => (
+  <svg
+    className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path d="M12 2l7 4v5c0 5.25-3.5 10-7 11-3.5-1-7-5.75-7-11V6l7-4z" />
+    <path d="M12 2v20" />
+  </svg>
+);
+
 /* ---------- Componente (versión GERENTE en VERDE) ---------- */
 const NavbarGerente: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -103,6 +111,7 @@ const NavbarGerente: React.FC = () => {
   const menuItems = [
     { id: 'turnos', label: 'Metricas', icon: BarChart3, href: '/metricas' },
     { id: 'pacientes', label: 'Pacientes', icon: User, href: '/gerencia/pacientes' },
+    { id: 'especialidades', label: 'Especialidades', icon: Especialidades, href: '/especialidades' },
     { id: 'historial', label: 'Profesionales', icon: User, href: '/gerencia/buscar' },
     { id: 'profesionales', label: 'Historial Turnos', icon: Calendar, href: '/historialturnos' },
   ];
