@@ -111,7 +111,6 @@ const Navbar: React.FC = () => {
   const menuItems = [
     { id: 'turnos', label: 'Calendario', icon: Calendar, href: '/turnos' },
     { id: 'pacientes', label: 'Pacientes', icon: UserPlus, href: '/pacientes' },
-    { id: 'historial', label: 'Historias Clinicas', icon: MedicalRecord, href: '/historias' },
     { id: 'profesionales', label: 'Profesionales', icon: UserCheck, href: '/profesionales' },
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3, href: '/dashboard' },
   ];

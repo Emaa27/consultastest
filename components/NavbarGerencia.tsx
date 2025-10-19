@@ -153,7 +153,7 @@ const NavbarGerencia: React.FC = () => {
         </div>
 
         {/* Menu */}
-        <nav className="flex-1 px-3 py-6 space-y-2 overflow-hidden">
+        <nav className="flex-1 px-3 py-6 space-y-2 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400">
           {menuItems.map(({ id, label, icon: Icon, href }) => {
             const active = isActive(href);
             return (
@@ -243,8 +243,8 @@ const NavbarGerencia: React.FC = () => {
           className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40 pt-16"
           onClick={() => setIsMobileMenuOpen(false)}
         >
-          <div className="fixed left-0 top-16 bottom-0 w-64 bg-white shadow-lg rounded-r-3xl" onClick={(e) => e.stopPropagation()}>
-            <nav className="p-4 space-y-2">
+          <div className="fixed left-0 top-16 bottom-0 w-64 bg-white shadow-lg rounded-r-3xl flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <nav className="flex-1 p-4 space-y-2 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
               {menuItems.map(({ id, label, icon: Icon, href }) => {
                 const active = isActive(href);
                 return (
@@ -265,37 +265,62 @@ const NavbarGerencia: React.FC = () => {
                 );
               })}
 
-              <div className="pt-4 border-t border-gray-200 space-y-3">
-                <div className="flex items-center px-4 py-2">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#16a34a] to-[#86efac] flex items-center justify-center text-white font-bold">
-                    {getInitials(userName)}
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm font-semibold text-gray-800">{userName}</p>
-                    <p className="text-xs text-gray-500">{userEmail}</p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="w-full flex items-center px-4 py-3 text-gray-700 hover:bg-green-50 hover:text-green-700 rounded-xl transition-all duration-200"
-                >
-                  <LogOut className="w-5 h-5 mr-3" />
-                  <span className="font-medium">Cerrar sesión</span>
-                </button>
-              </div>
             </nav>
+            
+            <div className="border-t border-gray-200 p-4 space-y-3 bg-white">
+              <div className="flex items-center px-4 py-2">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#16a34a] to-[#86efac] flex items-center justify-center text-white font-bold">
+                  {getInitials(userName)}
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm font-semibold text-gray-800">{userName}</p>
+                  <p className="text-xs text-gray-500">{userEmail}</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="w-full flex items-center px-4 py-3 text-gray-700 hover:bg-green-50 hover:text-green-700 rounded-xl transition-all duration-200"
+              >
+                <LogOut className="w-5 h-5 mr-3" />
+                <span className="font-medium">Cerrar sesión</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      <style jsx>{`
+      <style jsx global>{`
         @keyframes fade-in {
           from { opacity: 0; }
           to { opacity: 1; }
         }
         .animate-fade-in { animation: fade-in 0.3s ease-out forwards; }
+        
+        /* Scrollbar personalizado */
+        .scrollbar-thin::-webkit-scrollbar {
+          width: 6px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+          background: #d1d5db;
+          border-radius: 3px;
+        }
+        .scrollbar-thin:hover::-webkit-scrollbar-thumb {
+          background: #9ca3af;
+        }
+        .scrollbar-track-transparent::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
+          background: #d1d5db;
+        }
+        .hover\:scrollbar-thumb-gray-400:hover::-webkit-scrollbar-thumb {
+          background: #9ca3af;
+        }
       `}</style>
     </>
   );

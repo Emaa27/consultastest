@@ -147,7 +147,7 @@ export function UsuariosListComponent({ filters, refreshTrigger }: UsuariosListP
                       onClick={() => handleToggleEstado(user.usuario_id, user.estado === 'activo' ? 'inactivo' : 'activo')}
                       className={`font-medium ${user.estado === 'activo' ? 'text-red-600 hover:text-red-700' : 'text-green-600 hover:text-green-700'}`}
                     >
-                      {user.estado === 'activo' ? 'Desactivar' : 'Activar'}
+                      {user.estado === 'activo' ? 'Dar de baja' : 'Activar'}
                     </button>
                   </div>
                 </td>

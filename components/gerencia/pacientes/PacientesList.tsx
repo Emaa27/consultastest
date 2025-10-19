@@ -104,7 +104,7 @@ export function PacientesListComponent({ filters, refreshTrigger }: PacientesLis
               <td className="px-6 py-4 text-sm">
                 <button  onClick={() => handleToggleEstado(pac.paciente_id, pac.estado === 'activo' ? 'inactivo' : 'activo')}
                 className={`font-medium ${pac.estado === 'activo' ? 'text-red-600 hover:text-red-700' : 'text-green-600 hover:text-green-700'}`}>
-                  {pac.estado === 'activo' ? 'Desactivar' : 'Activar'}
+                  {pac.estado === 'activo' ? 'Dar de baja' : 'Activar'}
                 </button>
               </td>
             </tr>

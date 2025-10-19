@@ -97,23 +97,31 @@ export default function HistoriasPage() {
   }, []);
 
   //
-  const historiasFiltradas = historias.filter((h) => {
-    const term = searchTerm.toLowerCase().trim();
-    const nombre = h.pacientes.nombre.toLowerCase();
-    const apellido = h.pacientes.apellido.toLowerCase();
-    const dni = h.pacientes.documento.toLowerCase();
+  const historiasFiltradas = historias
+    .filter((h) => {
+      const term = searchTerm.toLowerCase().trim();
+      const nombre = h.pacientes.nombre.toLowerCase();
+      const apellido = h.pacientes.apellido.toLowerCase();
+      const dni = h.pacientes.documento.toLowerCase();
 
-    const nombreCompleto = `${nombre} ${apellido}`;
-    const apellidoNombre = `${apellido} ${nombre}`;
+      const nombreCompleto = `${nombre} ${apellido}`;
+      const apellidoNombre = `${apellido} ${nombre}`;
 
-    return (
-      nombre.includes(term) ||
-      apellido.includes(term) ||
-      dni.includes(term) ||
-      nombreCompleto.includes(term) ||
-      apellidoNombre.includes(term)
-    );
-  });
+      return (
+        nombre.includes(term) ||
+        apellido.includes(term) ||
+        dni.includes(term) ||
+        nombreCompleto.includes(term) ||
+        apellidoNombre.includes(term)
+      );
+    })
+    .sort((a, b) => {
+      const apellidoA = a.pacientes.apellido.toLowerCase();
+      const apellidoB = b.pacientes.apellido.toLowerCase();
+      if (apellidoA < apellidoB) return -1;
+      if (apellidoA > apellidoB) return 1;
+      return 0;
+    });
 
   return (
     <main className="p-6 bg-gradient-to-br min-h-screen">

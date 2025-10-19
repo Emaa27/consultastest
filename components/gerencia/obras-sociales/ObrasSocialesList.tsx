@@ -101,7 +101,7 @@ export function ObrasSocialesListComponent({ filters, refreshTrigger }: ObrasSoc
                   onClick={() => handleToggleEstado(os.obra_social_id, os.estado === 'activa' ? 'inactiva' : 'activa')}
                   className={`font-medium ${os.estado === 'activa' ? 'text-red-600 hover:text-red-700' : 'text-green-600 hover:text-green-700'}`}
                 >
-                  {os.estado === 'activa' ? 'Desactivar' : 'Activar'}
+                  {os.estado === 'activa' ? 'Dar de baja' : 'Activar'}
                 </button>
               </td>
             </tr>

@@ -156,7 +156,7 @@ export function ProfesionalesListComponent({ filters, refreshTrigger }: Profesio
                       onClick={() => handleToggleEstado(prof.profesional_id, prof.estado === 'activo' ? 'inactivo' : 'activo')}
                       className={`font-medium ${prof.estado === 'activo' ? 'text-red-600 hover:text-red-700' : 'text-green-600 hover:text-green-700'}`}
                     >
-                      {prof.estado === 'activo' ? 'Desactivar' : 'Activar'}
+                      {prof.estado === 'activo' ? 'Dar de baja' : 'Activar'}
                     </button>
                   </div>
                 </td>
