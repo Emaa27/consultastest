@@ -50,26 +50,66 @@ export default function ProfesionalesFormComponent({ onSuccess }: ProfesionalesF
   };
 
   const validateForm = () => {
+    // Validar nombre (solo letras y espacios)
     if (!formData.nombreUsuario.trim()) {
       setError('El nombre es requerido');
       return false;
     }
+    if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(formData.nombreUsuario.trim())) {
+      setError('El nombre solo puede contener letras');
+      return false;
+    }
+
+    // Validar apellido (solo letras y espacios)
     if (!formData.apellidoUsuario.trim()) {
       setError('El apellido es requerido');
       return false;
     }
+    if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(formData.apellidoUsuario.trim())) {
+      setError('El apellido solo puede contener letras');
+      return false;
+    }
+
+    // Validar email
     if (!formData.emailUsuario.trim() || !/\S+@\S+\.\S+/.test(formData.emailUsuario)) {
       setError('Email inválido');
       return false;
     }
-    if (!formData.contrasena || formData.contrasena.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres');
+
+    // Validar DNI (solo números, 7-8 dígitos)
+    if (!formData.dniUsuario.trim()) {
+      setError('El DNI es requerido');
       return false;
     }
+    if (!/^\d{7,8}$/.test(formData.dniUsuario.trim())) {
+      setError('El DNI debe contener solo números (7-8 dígitos)');
+      return false;
+    }
+
+    // Validar teléfono (opcional, pero si se ingresa debe ser válido)
+    if (formData.telefonoUsuario.trim() && !/^[+\d\s\-()]+$/.test(formData.telefonoUsuario.trim())) {
+      setError('El teléfono solo puede contener números, espacios, +, - y paréntesis');
+      return false;
+    }
+
+    // Validar contraseña
+    if (!formData.contrasena) {
+      setError('La contraseña es requerida');
+      return false;
+    }
+
+    // Validar matrícula (opcional, letras y números)
+    if (formData.matricula.trim() && !/^[a-zA-Z0-9\s\-]+$/.test(formData.matricula.trim())) {
+      setError('La matrícula solo puede contener letras, números, espacios y guiones');
+      return false;
+    }
+
+    // Validar profesión
     if (!formData.profesion_id) {
       setError('Debe seleccionar una profesión');
       return false;
     }
+
     return true;
   };
 
@@ -93,7 +133,7 @@ export default function ProfesionalesFormComponent({ onSuccess }: ProfesionalesF
             apellido: formData.apellidoUsuario.trim(),
             email: formData.emailUsuario.trim().toLowerCase(),
             telefono: formData.telefonoUsuario.trim() || null,
-            dni: formData.dniUsuario.trim() || null,
+            dni: formData.dniUsuario.trim(),
             contrasena: formData.contrasena,
             rol_id: parseInt(formData.rol_id),
           },
@@ -150,6 +190,8 @@ export default function ProfesionalesFormComponent({ onSuccess }: ProfesionalesF
             value={formData.nombreUsuario}
             onChange={handleChange}
             required
+            pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+"
+            title="Solo se permiten letras"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none"
           />
         </div>
@@ -165,6 +207,8 @@ export default function ProfesionalesFormComponent({ onSuccess }: ProfesionalesF
             value={formData.apellidoUsuario}
             onChange={handleChange}
             required
+            pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+"
+            title="Solo se permiten letras"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none"
           />
         </div>
@@ -186,7 +230,7 @@ export default function ProfesionalesFormComponent({ onSuccess }: ProfesionalesF
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            DNI
+            DNI <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -194,6 +238,10 @@ export default function ProfesionalesFormComponent({ onSuccess }: ProfesionalesF
             placeholder="12345678"
             value={formData.dniUsuario}
             onChange={handleChange}
+            required
+            pattern="\d{7,8}"
+            maxLength={8}
+            title="Solo números, 7-8 dígitos"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none"
           />
         </div>
@@ -208,6 +256,8 @@ export default function ProfesionalesFormComponent({ onSuccess }: ProfesionalesF
             placeholder="+54 11 1234-5678"
             value={formData.telefonoUsuario}
             onChange={handleChange}
+            pattern="[+\d\s\-()]+"
+            title="Solo números, espacios, +, - y paréntesis"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none"
           />
         </div>
@@ -219,11 +269,10 @@ export default function ProfesionalesFormComponent({ onSuccess }: ProfesionalesF
           <input
             type="password"
             name="contrasena"
-            placeholder="Mínimo 6 caracteres"
+            placeholder="Ingrese una contraseña"
             value={formData.contrasena}
             onChange={handleChange}
             required
-            minLength={6}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none"
           />
         </div>
@@ -238,6 +287,8 @@ export default function ProfesionalesFormComponent({ onSuccess }: ProfesionalesF
             placeholder="MP 12345"
             value={formData.matricula}
             onChange={handleChange}
+            pattern="[a-zA-Z0-9\s\-]+"
+            title="Solo letras, números, espacios y guiones"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none"
           />
         </div>
