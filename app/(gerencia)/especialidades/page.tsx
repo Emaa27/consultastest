@@ -1,62 +1,32 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 
-/* ---------------- Íconos locales ---------------- */
+
+
+/* ---------------- Íconos ---------------- */
 const EspecialidadIcon = ({ className }: { className?: string }) => (
-  <svg
-    className={className}
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    viewBox="0 0 24 24"
-  >
+  <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
     <path d="M12 2l7 4v5c0 5.25-3.5 10-7 11-3.5-1-7-5.75-7-11V6l7-4z" />
     <path d="M12 2v20" />
   </svg>
 );
 
 const Plus = ({ className }: { className?: string }) => (
-  <svg
-    className={className}
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    viewBox="0 0 24 24"
-  >
+  <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
     <line x1="12" y1="5" x2="12" y2="19" />
     <line x1="5" y1="12" x2="19" y2="12" />
   </svg>
 );
 
 const X = ({ className }: { className?: string }) => (
-  <svg
-    className={className}
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    viewBox="0 0 24 24"
-  >
+  <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
     <line x1="18" y1="6" x2="6" y2="18" />
     <line x1="6" y1="6" x2="18" y2="18" />
   </svg>
 );
 
 const Search = ({ className }: { className?: string }) => (
-  <svg
-    className={className}
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    viewBox="0 0 24 24"
-  >
+  <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
     <circle cx="11" cy="11" r="8"></circle>
     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
   </svg>
@@ -67,6 +37,7 @@ interface Especialidad {
   profesion_id: number;
   nombre: string;
   descripcion?: string | null;
+  active?: 'activo' | 'inactivo' | null;
 }
 
 /* ---------------- Página principal ---------------- */
@@ -120,10 +91,28 @@ export default function EspecialidadesPage() {
       setShowForm(false);
       fetchEspecialidades();
     } catch (err: any) {
-      setMensaje({
-        tipo: 'error',
-        texto: err.message || 'Error al registrar la especialidad',
+      setMensaje({ tipo: 'error', texto: err.message || 'Error al registrar la especialidad' });
+    }
+  };
+
+  const handleToggleActive = async (id: number, nuevoEstado: 'activo' | 'inactivo') => {
+    try {
+      const res = await fetch('/api/especialidades', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, active: nuevoEstado }),
       });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al actualizar estado');
+
+      setMensaje({
+        tipo: 'ok',
+        texto: nuevoEstado === 'activo' ? 'Especialidad activada' : 'Especialidad desactivada',
+      });
+
+      fetchEspecialidades();
+    } catch (err: any) {
+      setMensaje({ tipo: 'error', texto: err.message || 'Error al cambiar estado' });
     }
   };
 
@@ -146,9 +135,7 @@ export default function EspecialidadesPage() {
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="mt-4 sm:mt-0 bg-gradient-to-r from-green-500 to-emerald-600
-                     hover:from-green-600 hover:to-emerald-700 text-white
-                     px-4 py-2 rounded-xl flex items-center gap-2 shadow-md"
+          className="mt-4 sm:mt-0 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-md"
         >
           <Plus className="w-5 h-5" />
           Nueva Especialidad
@@ -158,11 +145,10 @@ export default function EspecialidadesPage() {
       {/* Mensaje */}
       {mensaje && (
         <div
-          className={`mb-4 p-3 rounded-lg border text-center font-medium ${
-            mensaje.tipo === 'ok'
-              ? 'bg-green-100 border-green-300 text-green-700'
-              : 'bg-red-100 border-red-300 text-red-700'
-          }`}
+          className={`mb-4 p-3 rounded-lg border text-center font-medium ${mensaje.tipo === 'ok'
+            ? 'bg-green-100 border-green-300 text-green-700'
+            : 'bg-red-100 border-red-300 text-red-700'
+            }`}
         >
           {mensaje.texto}
         </div>
@@ -196,21 +182,43 @@ export default function EspecialidadesPage() {
             {especialidadesFiltradas.map((esp) => (
               <div
                 key={esp.profesion_id}
-                className="p-5 rounded-xl bg-gradient-to-r from-green-100 to-emerald-200
-                           hover:from-green-300 hover:to-emerald-500 cursor-pointer
-                           border border-gray-200 transition-all duration-300 hover:shadow-xl"
+                className={`p-5 rounded-xl border transition-all duration-300 hover:shadow-xl flex flex-col justify-between ${esp.active === 'activo'
+                    ? 'bg-gradient-to-r from-green-100 to-emerald-200 hover:from-green-300 hover:to-emerald-500'
+                    : 'bg-gray-100 border-gray-300 opacity-75'
+                  }`}
               >
-                <p className="font-semibold text-gray-800 text-lg">{esp.nombre}</p>
-                <p className="text-sm text-gray-600">
-                  {esp.descripcion || 'Sin descripción'}
-                </p>
+                <div>
+                  <p className="font-semibold text-gray-800 text-lg mb-1">
+                    {esp.nombre}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {esp.descripcion || 'Sin descripción'}
+                  </p>
+                </div>
+
+                <div className="flex justify-end mt-4">
+                  <button
+                    onClick={() =>
+                      handleToggleActive(
+                        esp.profesion_id,
+                        (esp.active ?? 'inactivo') === 'activo' ? 'inactivo' : 'activo'
+                      )
+                    }
+                    className={`px-3 py-1 rounded-lg text-white text-sm font-medium transition-all shadow-md ${esp.active === 'activo'
+                        ? 'bg-red-500 hover:bg-red-600'
+                        : 'bg-green-500 hover:bg-green-600'
+                      }`}
+                  >
+                    {esp.active === 'activo' ? 'Desactivar' : 'Activar'}
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* Modal Registro */}
+      {/* Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl border border-gray-200">
@@ -221,18 +229,13 @@ export default function EspecialidadesPage() {
                 </div>
                 Registro de Nueva Especialidad
               </h3>
-              <button
-                onClick={() => setShowForm(false)}
-                className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
-              >
+              <button onClick={() => setShowForm(false)} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
                 <X className="w-6 h-6 text-gray-500" />
               </button>
             </div>
 
             <form onSubmit={handleRegistrar}>
-              <label className="block mb-2 text-sm font-medium text-gray-700">
-                Nombre de la Especialidad *
-              </label>
+              <label className="block mb-2 text-sm font-medium text-gray-700">Nombre *</label>
               <input
                 type="text"
                 value={nombre}
@@ -241,9 +244,7 @@ export default function EspecialidadesPage() {
                 className="w-full border rounded-lg p-2 mb-4 focus:ring-2 focus:ring-emerald-400 focus:outline-none"
               />
 
-              <label className="block mb-2 text-sm font-medium text-gray-700">
-                Descripción / Notas
-              </label>
+              <label className="block mb-2 text-sm font-medium text-gray-700">Descripción</label>
               <textarea
                 value={descripcion}
                 onChange={(e) => setDescripcion(e.target.value)}
@@ -252,17 +253,10 @@ export default function EspecialidadesPage() {
               ></textarea>
 
               <div className="flex gap-3 justify-end">
-                <button
-                  type="button"
-                  onClick={() => setShowForm(false)}
-                  className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition-colors"
-                >
+                <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition-colors">
                   Cancelar
                 </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 transition-all shadow-md"
-                >
+                <button type="submit" className="px-4 py-2 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 transition-all shadow-md">
                   Registrar Especialidad
                 </button>
               </div>

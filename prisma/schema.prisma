@@ -141,9 +141,12 @@ model profesionales {
 }
 
 model profesiones {
-  profesion_id  Int             @id @default(autoincrement())
-  nombre        String          @unique(map: "nombre") @db.VarChar(80)
-  profesionales profesionales[]
+  profesion_id   Int                 @id @default(autoincrement())
+  nombre         String              @unique(map: "nombre") @db.VarChar(80)
+  descripcion    String?             @db.VarChar(80)
+  fecha_registro DateTime?           @db.DateTime(0)
+  active         profesiones_active?
+  profesionales  profesionales[]
 }
 
 model pruebas_complementarias {
@@ -293,4 +296,9 @@ enum turnos_estado {
   atendido
   ausente
   cancelado
+}
+
+enum profesiones_active {
+  activo
+  inactivo
 }
