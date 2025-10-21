@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { TurnosPieChart } from '@/components/TurnosPieChart';
 import { ObraSocialPieChart } from '@/components/ObraSocialPieChart';
 import { useEffect, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 
 // Íconos SVG (Basados en tu código de Navbar)
 type IconProps = { className?: string };
@@ -108,7 +109,16 @@ const ActivityLog = () => {
                         <li key={index} className="flex items-start border-l-4 border-[#86efac] pl-3">
                             <div className="text-sm">
                                 <span className="font-bold text-gray-900 mr-2">{activity.time}</span>
-                                <span className="text-gray-700" dangerouslySetInnerHTML={{ __html: activity.description }} />
+                                <span className="text-gray-700 inline">
+                                    <ReactMarkdown 
+                                        components={{
+                                            p: ({node, ...props}) => <span {...props} />,
+                                            strong: ({node, ...props}) => <strong className="font-semibold text-gray-900" {...props} />
+                                        }}
+                                    >
+                                        {activity.description}
+                                    </ReactMarkdown>
+                                </span>
                             </div>
                         </li>
                     ))}

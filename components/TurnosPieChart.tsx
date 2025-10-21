@@ -29,43 +29,90 @@ const renderTooltip = ({ active, payload }: any) => {
 export const TurnosPieChart = () => {
   const [data, setData] = useState<TurnoData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dias, setDias] = useState(7);
+  const [fechaInicio, setFechaInicio] = useState('');
+  const [fechaFin, setFechaFin] = useState('');
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      let url = '/api/gerencia/turnos-estado';
+      
+      if (fechaInicio && fechaFin) {
+        url += `?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`;
+      }
+      
+      const response = await fetch(url);
+      const result = await response.json();
+      
+      if (result.data && Array.isArray(result.data)) {
+        setData(result.data);
+      }
+    } catch (error) {
+      console.error("Error cargando datos de turnos:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/gerencia/turnos-estado?dias=${dias}`);
-        const result = await response.json();
-        
-        if (result.data && Array.isArray(result.data)) {
-          setData(result.data);
-        }
-      } catch (error) {
-        console.error("Error cargando datos de turnos:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
-  }, [dias]);
+  }, []);
+
+  const aplicarFiltro = () => {
+    fetchData();
+  };
+
+  const limpiarFiltro = () => {
+    setFechaInicio('');
+    setFechaFin('');
+    setTimeout(() => fetchData(), 0);
+  };
 
   return (
     <div className="p-6 bg-white rounded-xl shadow-lg border border-gray-100 h-full">
-      <div className="flex justify-between items-center mb-2">
-        <h3 className="text-lg font-bold text-gray-800">Estado de los Turnos</h3>
-        <select
-          value={dias}
-          onChange={(e) => setDias(Number(e.target.value))}
-          className="text-sm border border-gray-300 rounded px-2 py-1"
-        >
-          <option value={7}>Últimos 7 días</option>
-          <option value={15}>Últimos 15 días</option>
-          <option value={30}>Últimos 30 días</option>
-        </select>
-      </div>
+      <h3 className="text-lg font-bold text-gray-800 mb-2">Estado de los Turnos</h3>
       <p className="text-sm text-gray-500 mb-4">Proporción de turnos Atendidos vs. Cancelados vs. Pendientes.</p>
+      
+      {/* Filtro de fechas */}
+      <div className="mb-4 flex flex-wrap items-end gap-2">
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            Desde
+          </label>
+          <input
+            type="date"
+            value={fechaInicio}
+            onChange={(e) => setFechaInicio(e.target.value)}
+            className="px-2 py-1 text-sm border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            Hasta
+          </label>
+          <input
+            type="date"
+            value={fechaFin}
+            onChange={(e) => setFechaFin(e.target.value)}
+            className="px-2 py-1 text-sm border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          />
+        </div>
+        <button
+          onClick={aplicarFiltro}
+          disabled={!fechaInicio || !fechaFin}
+          className="px-3 py-1 text-sm bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Filtrar
+        </button>
+        {(fechaInicio || fechaFin) && (
+          <button
+            onClick={limpiarFiltro}
+            className="px-3 py-1 text-sm bg-gray-500 text-white font-medium rounded-lg hover:bg-gray-600 transition-colors"
+          >
+            Limpiar
+          </button>
+        )}
+      </div>
       
       {loading ? (
         <div className="h-64 flex items-center justify-center">

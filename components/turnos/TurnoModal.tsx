@@ -452,7 +452,25 @@ const horasOcupadas = new Set<string>();
     if (m) horasOcupadas.add(`${m[1]}:${m[2]}`);
   }
 });
-const slotsDisponibles = slotsUnicosOrdenados.filter(s => !horasOcupadas.has(s));
+
+// Filtrar horarios pasados si es el día de hoy
+const ahora = new Date();
+const hoyStr = toDateStr(ahora);
+const esHoy = fecha === hoyStr;
+
+let slotsDisponibles = slotsUnicosOrdenados.filter(s => !horasOcupadas.has(s));
+
+if (esHoy) {
+  const horaActual = ahora.getHours();
+  const minutoActual = ahora.getMinutes();
+  const minutosActuales = horaActual * 60 + minutoActual;
+  
+  slotsDisponibles = slotsDisponibles.filter(slot => {
+    const [h, m] = slot.split(':').map(Number);
+    const minutosSlot = h * 60 + m;
+    return minutosSlot > minutosActuales;
+  });
+}
 
 setHorarios(slotsDisponibles);
 setHora(slotsDisponibles[0] || "");
