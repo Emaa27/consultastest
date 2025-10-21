@@ -11,7 +11,7 @@ export default function ProfesionesPage() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   return (
-    <section className="min-h-screen lg:ml-20 p-6 bg-gray-50">
+    <main className="p-6 bg-gradient-to-br from-gray-50 to-emerald-50 min-h-screen">
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -57,6 +57,6 @@ export default function ProfesionesPage() {
 
         <ProfesionesListComponent filters={filters} refreshTrigger={refreshTrigger} /> {/* ← Pasar filters aquí */}
       </div>
-    </section>
+    </main>
   );
 }

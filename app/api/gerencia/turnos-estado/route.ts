@@ -5,14 +5,26 @@ import { prisma } from "@/lib/prisma";
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const dias = parseInt(searchParams.get("dias") || "7"); // Por defecto últimos 7 días
+    const fechaInicio = searchParams.get("fechaInicio");
+    const fechaFin = searchParams.get("fechaFin");
 
-    // Calcular rango de fechas
-    const endDate = new Date();
-    endDate.setHours(23, 59, 59, 999);
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - dias);
-    startDate.setHours(0, 0, 0, 0);
+    let startDate: Date;
+    let endDate: Date;
+
+    if (fechaInicio && fechaFin) {
+      // Usar las fechas proporcionadas
+      startDate = new Date(fechaInicio);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date(fechaFin);
+      endDate.setHours(23, 59, 59, 999);
+    } else {
+      // Por defecto, usar los últimos 7 días
+      endDate = new Date();
+      endDate.setHours(23, 59, 59, 999);
+      startDate = new Date();
+      startDate.setDate(startDate.getDate() - 7);
+      startDate.setHours(0, 0, 0, 0);
+    }
 
     // Obtener conteo de turnos por estado
     const turnos = await prisma.turnos.groupBy({
@@ -60,7 +72,6 @@ export async function GET(req: Request) {
       periodo: {
         inicio: startDate.toISOString().split("T")[0],
         fin: endDate.toISOString().split("T")[0],
-        dias,
       },
     });
   } catch (error) {

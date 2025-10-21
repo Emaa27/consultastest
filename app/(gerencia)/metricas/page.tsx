@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { TurnosPieChart } from '@/components/TurnosPieChart';
 import { ObraSocialPieChart } from '@/components/ObraSocialPieChart';
 import { useEffect, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 
 // Íconos SVG (Basados en tu código de Navbar)
 type IconProps = { className?: string };
@@ -108,7 +109,16 @@ const ActivityLog = () => {
                         <li key={index} className="flex items-start border-l-4 border-[#86efac] pl-3">
                             <div className="text-sm">
                                 <span className="font-bold text-gray-900 mr-2">{activity.time}</span>
-                                <span className="text-gray-700" dangerouslySetInnerHTML={{ __html: activity.description }} />
+                                <span className="text-gray-700 inline">
+                                    <ReactMarkdown 
+                                        components={{
+                                            p: ({node, ...props}) => <span {...props} />,
+                                            strong: ({node, ...props}) => <strong className="font-semibold text-gray-900" {...props} />
+                                        }}
+                                    >
+                                        {activity.description}
+                                    </ReactMarkdown>
+                                </span>
                             </div>
                         </li>
                     ))}
@@ -188,81 +198,81 @@ export default function GerenciaPage() {
     };
     
     return (
-        <div className="p-4 sm:p-8 space-y-8 bg-gray-50 min-h-screen lg:pl-28 pt-20 lg:pt-8">
-            
-            {/* 1. Cabecera y Bienvenida (¡El cartel de bienvenida!) */}
-            <header className="p-6 bg-gradient-to-r from-[#16a34a] to-[#86efac] text-white rounded-xl shadow-xl">
-                <h1 className="text-3xl sm:text-4xl font-extrabold">
-                    ¡Bienvenido/a, {gerenteName}! 
-                </h1>
-                <p className="mt-2 text-green-100 text-lg">
-                    Revisa la actividad y el rendimiento de tu consultorio.
-                </p>
-                
-                {/* Filtro de fechas */}
-                <div className="mt-4 flex flex-wrap items-end gap-3">
-                    <div>
-                        <label className="block text-sm font-medium text-green-100 mb-1">
-                            Desde
-                        </label>
-                        <input
-                            type="date"
-                            value={fechaInicio}
-                            onChange={(e) => setFechaInicio(e.target.value)}
-                            className="px-3 py-2 border border-green-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-white focus:border-transparent"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-green-100 mb-1">
-                            Hasta
-                        </label>
-                        <input
-                            type="date"
-                            value={fechaFin}
-                            onChange={(e) => setFechaFin(e.target.value)}
-                            className="px-3 py-2 border border-green-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-white focus:border-transparent"
-                        />
-                    </div>
-                    <button
-                        onClick={aplicarFiltro}
-                        disabled={!fechaInicio || !fechaFin}
-                        className="px-4 py-2 bg-white text-green-700 font-medium rounded-lg hover:bg-green-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        Aplicar Filtro
-                    </button>
-                    {(fechaInicio || fechaFin) && (
+        <main className="p-6 bg-gradient-to-br from-gray-50 to-emerald-50 min-h-screen">
+            <div className="space-y-8">
+                {/* 1. Cabecera y Bienvenida (¡El cartel de bienvenida!) */}
+                <header className="p-6 bg-gradient-to-r from-[#16a34a] to-[#86efac] text-white rounded-xl shadow-xl">
+                    <h1 className="text-3xl sm:text-4xl font-extrabold">
+                        ¡Bienvenido/a, {gerenteName}!
+                    </h1>
+                    <p className="mt-2 text-green-100 text-lg">
+                        Revisa la actividad y el rendimiento de tu consultorio.
+                    </p>
+
+                    {/* Filtro de fechas */}
+                    <div className="mt-4 flex flex-wrap items-end gap-3">
+                        <div>
+                            <label className="block text-sm font-medium text-green-100 mb-1">
+                                Desde
+                            </label>
+                            <input
+                                type="date"
+                                value={fechaInicio}
+                                onChange={(e) => setFechaInicio(e.target.value)}
+                                className="px-3 py-2 border border-green-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-white focus:border-transparent"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-green-100 mb-1">
+                                Hasta
+                            </label>
+                            <input
+                                type="date"
+                                value={fechaFin}
+                                onChange={(e) => setFechaFin(e.target.value)}
+                                className="px-3 py-2 border border-green-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-white focus:border-transparent"
+                            />
+                        </div>
                         <button
-                            onClick={limpiarFiltro}
-                            className="px-4 py-2 bg-green-700 text-white font-medium rounded-lg hover:bg-green-800 transition-colors"
+                            onClick={aplicarFiltro}
+                            disabled={!fechaInicio || !fechaFin}
+                            className="px-4 py-2 bg-white text-green-700 font-medium rounded-lg hover:bg-green-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            Ver Hoy
+                            Aplicar Filtro
                         </button>
-                    )}
+                        {(fechaInicio || fechaFin) && (
+                            <button
+                                onClick={limpiarFiltro}
+                                className="px-4 py-2 bg-green-700 text-white font-medium rounded-lg hover:bg-green-800 transition-colors"
+                            >
+                                Ver Hoy
+                            </button>
+                        )}
+                    </div>
+                </header>
+            
+                {/* KPIs Destacados */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <KpiCard title={fechaInicio && fechaFin ? "Citas Agendadas" : "Citas Agendadas Hoy"} value={kpis.citasAgendadas} icon={Calendar} colorClass="text-indigo-600" loading={loadingKpis} />
+                    <KpiCard title={fechaInicio && fechaFin ? "Citas Atendidas" : "Citas Atendidas Hoy"} value={kpis.citasAtendidas} icon={UserCheck} colorClass="text-green-600" loading={loadingKpis} />
+                    <KpiCard title="Nuevos Pacientes" value={kpis.nuevosPacientes} icon={UserPlus} colorClass="text-amber-600" loading={loadingKpis} />
+                    <KpiCard title="Cancelaciones" value={kpis.cancelaciones} icon={XCircle} colorClass="text-red-600" loading={loadingKpis} />
                 </div>
-            </header>
-            
-            {/* KPIs Destacados */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <KpiCard title={fechaInicio && fechaFin ? "Citas Agendadas" : "Citas Agendadas Hoy"} value={kpis.citasAgendadas} icon={Calendar} colorClass="text-indigo-600" loading={loadingKpis} />
-                <KpiCard title={fechaInicio && fechaFin ? "Citas Atendidas" : "Citas Atendidas Hoy"} value={kpis.citasAtendidas} icon={UserCheck} colorClass="text-green-600" loading={loadingKpis} />
-                <KpiCard title="Nuevos Pacientes" value={kpis.nuevosPacientes} icon={UserPlus} colorClass="text-amber-600" loading={loadingKpis} />
-                <KpiCard title="Cancelaciones" value={kpis.cancelaciones} icon={XCircle} colorClass="text-red-600" loading={loadingKpis} />
+
+                {/* Contenido Principal: Actividad Reciente */}
+                <ActivityLog />
+
+                {/* 3. Métricas Clave (Gráficos de Torta) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+                    {/* ⬅️ REEMPLAZO: Gráfico 1 - Turnos REAL */}
+                    <TurnosPieChart />
+
+                    {/* ⬅️ REEMPLAZO: Gráfico 2 - Obra Social REAL */}
+                    <ObraSocialPieChart />
+
+                </div>
             </div>
-
-            {/* Contenido Principal: Actividad Reciente */}
-            <ActivityLog />
-
-            {/* 3. Métricas Clave (Gráficos de Torta) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                
-                {/* ⬅️ REEMPLAZO: Gráfico 1 - Turnos REAL */}
-                <TurnosPieChart /> 
-
-                {/* ⬅️ REEMPLAZO: Gráfico 2 - Obra Social REAL */}
-                <ObraSocialPieChart />
-                
-            </div>
-            
-        </div>
+        </main>
     );
 }

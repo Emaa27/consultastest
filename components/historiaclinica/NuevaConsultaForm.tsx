@@ -94,7 +94,7 @@ export const NuevaConsultaForm = ({
             <h3 className="text-base font-semibold text-gray-700">Anamnesis</h3>
             <textarea 
                 name="motivo_consulta" 
-                placeholder="Motivo de Consulta *" 
+                placeholder="Motivo *" 
                 value={formState.motivo_consulta} 
                 onChange={handleChange} 
                 rows={2} 
