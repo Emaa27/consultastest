@@ -125,7 +125,7 @@ const ActivityLog = () => {
 
 
 
-export default function GerenciaDashboardPage() {
+export default function GerenciaPage() {
     const [kpis, setKpis] = useState({
         citasAgendadas: 0,
         citasAtendidas: 0,

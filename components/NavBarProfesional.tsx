@@ -16,14 +16,14 @@ const Calendar = ({ className }: IconProps) => (
   </svg>
 );
 
-const Users = ({ className }: IconProps) => (
+const BarChart3 = ({ className }: IconProps) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-    <circle cx="9" cy="7" r="4"></circle>
-    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+    <line x1="12" y1="20" x2="12" y2="10"></line>
+    <line x1="18" y1="20" x2="18" y2="4"></line>
+    <line x1="6" y1="20" x2="6" y2="16"></line>
   </svg>
 );
+
 
 const FileText = ({ className }: IconProps) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,6 +92,7 @@ export default function NavbarProfesional() {
     { id: 'agenda', label: 'Mi Agenda', icon: Calendar, href: '/agendadiaria' },
     { id: 'historias', label: 'Historias Clínicas', icon: FileText, href: '/historias' },
     { id: 'perfil', label: 'Mi Perfil', icon: UserCheck, href: '/profesional/perfil' },
+    { id: 'dashboard', label: 'Dashboard', icon: BarChart3, href: '/dashboard' },
   ];
 
   const isActive = (href: string) => pathname === href || pathname?.startsWith(href + '/');
