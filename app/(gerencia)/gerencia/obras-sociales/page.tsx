@@ -12,7 +12,7 @@ export default function ObrasSocialesPage() {
 
   return (
     <main className="p-6 bg-gradient-to-br from-gray-50 to-emerald-50 min-h-screen">
-      <div className="w-full">
+      <div className="w-full px-8">
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Gestión de Obras Sociales</h1>
