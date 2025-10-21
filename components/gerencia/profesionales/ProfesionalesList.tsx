@@ -126,6 +126,7 @@ export function ProfesionalesListComponent({ filters, refreshTrigger }: Profesio
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Apellido</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Nombre</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Profesión</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Matrícula</th>
@@ -136,7 +137,8 @@ export function ProfesionalesListComponent({ filters, refreshTrigger }: Profesio
           <tbody>
             {profesionales.map((prof: Profesional) => (
               <tr key={prof.profesional_id} className="border-b border-gray-200 hover:bg-gray-50">
-                <td className="px-6 py-4 text-sm text-gray-900">{prof.usuarios?.nombre} {prof.usuarios?.apellido}</td>
+                <td className="px-6 py-4 text-sm text-gray-900">{prof.usuarios?.apellido}</td>
+                <td className="px-6 py-4 text-sm text-gray-900">{prof.usuarios?.nombre}</td>
                 <td className="px-6 py-4 text-sm text-gray-600">{prof.profesiones?.nombre}</td>
                 <td className="px-6 py-4 text-sm text-gray-600">{prof.matricula}</td>
                 <td className="px-6 py-4">

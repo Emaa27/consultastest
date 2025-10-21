@@ -25,6 +25,16 @@ export function UsuariosListComponent({ filters, refreshTrigger }: UsuariosListP
   const [loading, setLoading] = useState(true);
   const [editingUsuario, setEditingUsuario] = useState<Usuario | null>(null);
 
+  const sortUsuarios = (data: Usuario[]) => {
+    return [...data].sort((a, b) => {
+      const comparison = a.apellido.localeCompare(b.apellido, 'es', { sensitivity: 'base' });
+      if (comparison === 0) {
+        return a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' });
+      }
+      return comparison;
+    });
+  };
+
   useEffect(() => {
     const fetchUsuarios = async () => {
       setLoading(true);
@@ -49,16 +59,6 @@ export function UsuariosListComponent({ filters, refreshTrigger }: UsuariosListP
 
     fetchUsuarios();
   }, [filters, refreshTrigger]);
-
-  const sortUsuarios = (data: Usuario[]) => {
-    return [...data].sort((a, b) => {
-      const comparison = a.apellido.localeCompare(b.apellido, 'es', { sensitivity: 'base' });
-      if (comparison === 0) {
-        return a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' });
-      }
-      return comparison;
-    });
-  };
 
   const handleToggleEstado = async (id: number, nuevoEstado: string) => {
     try {
@@ -115,6 +115,7 @@ export function UsuariosListComponent({ filters, refreshTrigger }: UsuariosListP
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Apellido</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Nombre</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Email</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">DNI</th>
@@ -126,7 +127,8 @@ export function UsuariosListComponent({ filters, refreshTrigger }: UsuariosListP
           <tbody>
             {usuarios.map((user: Usuario) => (
               <tr key={user.usuario_id} className="border-b border-gray-200 hover:bg-gray-50">
-                <td className="px-6 py-4 text-sm text-gray-900">{user.nombre} {user.apellido}</td>
+                <td className="px-6 py-4 text-sm text-gray-900">{user.apellido}</td>
+                <td className="px-6 py-4 text-sm text-gray-900">{user.nombre}</td>
                 <td className="px-6 py-4 text-sm text-gray-600">{user.email}</td>
                 <td className="px-6 py-4 text-sm text-gray-600">{user.dni || '-'}</td>
                 <td className="px-6 py-4 text-sm text-gray-600">{user.roles?.nombre}</td>

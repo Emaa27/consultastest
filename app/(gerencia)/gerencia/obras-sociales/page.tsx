@@ -7,12 +7,12 @@ import ObrasSocialesFilterComponent from '@/components/gerencia/obras-sociales/O
 
 export default function ObrasSocialesPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [filters, setFilters] = useState({ estado: 'todos' });
+  const [filters, setFilters] = useState({ estado: 'todos', busqueda: '' });
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   return (
-    <section className="min-h-screen lg:ml-20 p-6 bg-gray-50">
-      <div className="max-w-6xl mx-auto">
+    <main className="p-6 bg-gradient-to-br from-gray-50 to-emerald-50 min-h-screen">
+      <div className="w-full">
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Gestión de Obras Sociales</h1>
@@ -57,6 +57,6 @@ export default function ObrasSocialesPage() {
 
         <ObrasSocialesListComponent filters={filters} refreshTrigger={refreshTrigger} />
       </div>
-    </section>
+    </main>
   );
 }

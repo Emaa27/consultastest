@@ -139,7 +139,7 @@ export default function HistorialTurnosPage() {
   };
 
   return (
-    <div className="p-4 sm:p-8 space-y-6 bg-gray-50 min-h-screen lg:pl-28 pt-20 lg:pt-8">
+    <div className="p-6 space-y-6 bg-gray-50 min-h-screen lg:pl-28 pt-20 lg:pt-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

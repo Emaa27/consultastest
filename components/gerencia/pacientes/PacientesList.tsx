@@ -81,6 +81,7 @@ export function PacientesListComponent({ filters, refreshTrigger }: PacientesLis
       <table className="w-full">
         <thead className="bg-gray-50 border-b border-gray-200">
           <tr>
+            <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Apellido</th>
             <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Nombre</th>
             <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Email</th>
             <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Documento</th>
@@ -92,7 +93,8 @@ export function PacientesListComponent({ filters, refreshTrigger }: PacientesLis
         <tbody>
           {pacientes.map((pac: Paciente) => (
             <tr key={pac.paciente_id} className="border-b border-gray-200 hover:bg-gray-50">
-              <td className="px-6 py-4 text-sm text-gray-900">{pac.nombre} {pac.apellido}</td>
+              <td className="px-6 py-4 text-sm text-gray-900">{pac.apellido}</td>
+              <td className="px-6 py-4 text-sm text-gray-900">{pac.nombre}</td>
               <td className="px-6 py-4 text-sm text-gray-600">{pac.email}</td>
               <td className="px-6 py-4 text-sm text-gray-600">{pac.documento || '-'}</td>
               <td className="px-6 py-4 text-sm text-gray-600">{pac.obras_sociales?.nombre}</td>

@@ -9,8 +9,8 @@ export default function PacientesPage() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   return (
-    <section className="min-h-screen lg:ml-20 p-6 bg-gray-50">
-      <div className="max-w-7xl mx-auto">
+    <main className="p-6 bg-gradient-to-br from-gray-50 to-emerald-50 min-h-screen">
+      <div className="w-full">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Gestión de Pacientes</h1>
           <p className="text-gray-600 mt-1">Administra el estado de los pacientes en el sistema</p>
@@ -22,6 +22,6 @@ export default function PacientesPage() {
 
         <PacientesListComponent filters={filters} refreshTrigger={refreshTrigger} />
       </div>
-    </section>
+    </main>
   );
 }

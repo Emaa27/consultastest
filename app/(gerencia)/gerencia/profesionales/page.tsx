@@ -11,8 +11,8 @@ export default function ProfesionalesPage() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   return (
-    <section className="min-h-screen lg:ml-20 p-6 bg-gray-50">
-      <div className="max-w-7xl mx-auto">
+    <main className="p-6 bg-gradient-to-br from-gray-50 to-emerald-50 min-h-screen">
+      <div className="w-full">
         <div className="flex flex-col gap-6 mb-8">
           <div className="flex justify-between items-center">
             <div>
@@ -34,9 +34,9 @@ export default function ProfesionalesPage() {
         </div>
 
         {isFormOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-96 overflow-y-auto">
-              <div className="flex justify-between items-center p-6 border-b">
+          <div className="fixed inset-0 bg-transparent backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-white z-10">
                 <h2 className="text-xl font-bold">Agregar Profesional</h2>
                 <button
                   onClick={() => setIsFormOpen(false)}
@@ -55,6 +55,6 @@ export default function ProfesionalesPage() {
 
         <ProfesionalesListComponent filters={filters} refreshTrigger={refreshTrigger} />
       </div>
-    </section>
+    </main>
   );
 }
