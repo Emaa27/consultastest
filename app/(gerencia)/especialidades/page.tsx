@@ -116,6 +116,13 @@ export default function EspecialidadesPage() {
     }
   };
 
+  useEffect(() => {
+    if (mensaje) {
+      const timer = setTimeout(() => setMensaje(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [mensaje]);
+
   const especialidadesFiltradas = especialidades.filter((esp) =>
     esp.nombre.toLowerCase().includes(busqueda.toLowerCase())
   );
@@ -131,7 +138,6 @@ export default function EspecialidadesPage() {
             </div>
             Especialidades Médicas
           </h1>
-          <p className="text-gray-600">Gestión del catálogo de servicios</p>
         </div>
         <button
           onClick={() => setShowForm(true)}
@@ -145,14 +151,15 @@ export default function EspecialidadesPage() {
       {/* Mensaje */}
       {mensaje && (
         <div
-          className={`mb-4 p-3 rounded-lg border text-center font-medium ${mensaje.tipo === 'ok'
-            ? 'bg-green-100 border-green-300 text-green-700'
-            : 'bg-red-100 border-red-300 text-red-700'
+          className={`fixed top-5 left-1/2 transform -translate-x-1/2 z-[9999] px-4 py-3 rounded-lg border text-center font-medium shadow-lg transition-all duration-300 ${mensaje.tipo === 'ok'
+            ? 'bg-green-100 border-green-400 text-green-800'
+            : 'bg-red-100 border-red-400 text-red-800'
             }`}
         >
           {mensaje.texto}
         </div>
       )}
+
 
       {/* Buscador */}
       <div className="mb-4 flex items-center gap-2 bg-white border border-gray-200 rounded-xl p-3 shadow-sm">
@@ -183,8 +190,8 @@ export default function EspecialidadesPage() {
               <div
                 key={esp.profesion_id}
                 className={`p-5 rounded-xl border transition-all duration-300 hover:shadow-xl flex flex-col justify-between ${esp.active === 'activo'
-                    ? 'bg-gradient-to-r from-green-100 to-emerald-200 hover:from-green-300 hover:to-emerald-500'
-                    : 'bg-gray-100 border-gray-300 opacity-75'
+                  ? 'bg-gradient-to-r from-green-100 to-emerald-200 hover:from-green-300 hover:to-emerald-500'
+                  : 'bg-gray-100 border-gray-300 opacity-75'
                   }`}
               >
                 <div>
@@ -205,8 +212,8 @@ export default function EspecialidadesPage() {
                       )
                     }
                     className={`px-3 py-1 rounded-lg text-white text-sm font-medium transition-all shadow-md ${esp.active === 'activo'
-                        ? 'bg-red-500 hover:bg-red-600'
-                        : 'bg-green-500 hover:bg-green-600'
+                      ? 'bg-red-500 hover:bg-red-600'
+                      : 'bg-green-500 hover:bg-green-600'
                       }`}
                   >
                     {esp.active === 'activo' ? 'Desactivar' : 'Activar'}

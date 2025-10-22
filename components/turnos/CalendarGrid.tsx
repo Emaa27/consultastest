@@ -1,4 +1,3 @@
-// components/turnos/CalendarGrid.tsx
 "use client";
 
 import React from "react";
@@ -15,6 +14,7 @@ interface CalendarGridProps {
   daysOfWeek: Date[];
   turnos: Turno[];
   filtros: Filtros;
+  busqueda?: string;
   onUpdate?: () => void;
 }
 
@@ -22,6 +22,7 @@ export default function CalendarGrid({
   daysOfWeek,
   turnos,
   filtros,
+  busqueda = "",
   onUpdate,
 }: CalendarGridProps) {
   const now = new Date();
@@ -38,31 +39,67 @@ export default function CalendarGrid({
   const turnosPorDia = (day: Date) =>
     turnos
       .filter((t) => {
-        const inicio = toDate(t.inicio);
+        const inicio = new Date(t.inicio as any);
 
-        // 1) el turno pertenece a la columna (mismo día)
-        if (!sameDay(inicio, day)) return false;
+        // 1) pertenece al día
+        const matchesDay =
+          inicio.getFullYear() === day.getFullYear() &&
+          inicio.getMonth() === day.getMonth() &&
+          inicio.getDate() === day.getDate();
 
-        // 2) Filtro por profesional
-        if (filtros.profesional_id && t.profesional_id !== filtros.profesional_id) {
-          return false;
-        }
+        // 2) profesional
+        const matchesProfesional =
+          !filtros.profesional_id || t.profesional_id === filtros.profesional_id;
 
-        // 3) Filtro por obra social
-        if (filtros.obra_social_id && t.obra_social_id !== filtros.obra_social_id) {
-          return false;
-        }
+        // 3) obra social (usa la del turno y si no, la del paciente)
+        const osTurno =
+          t.obra_social_id ??
+          (t.pacientes && "obra_social_id" in t.pacientes
+            ? t.pacientes.obra_social_id ?? null
+            : null);
+        const matchesOS =
+          !filtros.obra_social_id || osTurno === filtros.obra_social_id;
 
-        // 4) si histórico está OFF → solo futuros respecto a "ahora"
-        if (!filtros.mostrarHistorico) {
-          // si es hoy, desde "ahora" en adelante; si es un día posterior, todos
-          if (sameDay(day, now)) return inicio >= now;
-          if (day > startOfToday) return true; // día futuro
-          return false; // día pasado (no mostrar)
-        }
+        // 4) histórico
+        const now = new Date();
+        const startOfToday = new Date(now);
+        startOfToday.setHours(0, 0, 0, 0);
 
-        // 5) histórico ON → sin filtro temporal
-        return true;
+        const withinHistoric =
+          filtros.mostrarHistorico ||
+          ( // si no mostramos histórico: hoy desde ahora; futuro todo; pasado nada
+            (day.getFullYear() === now.getFullYear() &&
+              day.getMonth() === now.getMonth() &&
+              day.getDate() === now.getDate()
+              ? inicio >= now
+              : day > startOfToday)
+          );
+
+        // 5) buscador (paciente o profesional, sin acentos)
+        const norm = (s: string) =>
+          s
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .trim();
+
+        const q = norm(busqueda || "");
+
+        const pacienteNombre = norm(
+          `${t.pacientes?.nombre ?? ""} ${t.pacientes?.apellido ?? ""}`
+        );
+        const profesionalNombre = norm(
+          `${t.profesionales?.usuarios?.nombre ?? ""} ${t.profesionales?.usuarios?.apellido ?? ""}`
+        );
+
+        const matchesSearch = !q || pacienteNombre.includes(q) || profesionalNombre.includes(q);
+        return (
+          matchesDay &&
+          matchesProfesional &&
+          matchesOS &&
+          withinHistoric &&
+          matchesSearch
+        );
       })
       .sort(
         (a, b) =>
