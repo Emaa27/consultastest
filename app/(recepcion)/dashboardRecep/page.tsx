@@ -1,12 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import ReactMarkdown from 'react-markdown';
 
 // --- Importa los gráficos ---
-// *** VERIFICA QUE ESTAS RUTAS SEAN CORRECTAS ***
 import { FlujoDiaLineChart } from '@/components/recepcion/FlujoDiaLineChart';
-import { EstadoTurnosPieChart } from '@/components/recepcion/EstadoTurnosPieChart'; // Asegúrate que este exista y reciba props
 import { CargaProfesionalBarChart } from '@/components/recepcion/CargaProfesionalBarChart';
 
 // --- Íconos ---
@@ -46,43 +43,6 @@ const KpiCard = ({ title, value, icon: Icon, colorClass, loading }: { title: str
   </div>
 );
 
-// --- Componente ActivityLog (recibe props) ---
-const ActivityLog = ({ activities, loading }: { activities: any[], loading: boolean }) => {
-  return (
-    <div className="p-6 bg-white rounded-xl shadow-lg border border-gray-100">
-      <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-        <Clock className="w-5 h-5 mr-2 text-blue-600" />
-        Actividad Reciente (Pacientes Confirmados)
-      </h3>
-      {loading ? (
-        <div className="py-8 text-center text-gray-500">Cargando...</div>
-      ) : activities.length === 0 ? (
-        <div className="py-8 text-center text-gray-500">Aún no hay pacientes confirmados hoy</div>
-      ) : (
-        <ul className="space-y-4">
-          {activities.map((activity, index) => (
-            <li key={index} className="flex items-start border-l-4 border-blue-300 pl-3">
-              <div className="text-sm">
-                <span className="font-bold text-gray-900 mr-2">{activity.time}</span>
-                <span className="text-gray-700 inline">
-                  <ReactMarkdown
-                    components={{
-                      p: ({ node, ...props }) => <span {...props} />,
-                      strong: ({ node, ...props }) => <strong className="font-semibold text-gray-900" {...props} />
-                    }}
-                  >
-                    {activity.description}
-                  </ReactMarkdown>
-                </span>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
 // --- Página Principal del Dashboard ---
 export default function RecepcionDashboardPage() {
     // --- Estado para TODOS los datos del dashboard ---
@@ -93,21 +53,20 @@ export default function RecepcionDashboardPage() {
         pacientesNuevosHoy: 0,
     });
     const [flujoData, setFlujoData] = useState([]);
-    const [pieData, setPieData] = useState([]);
-    const [activityData, setActivityData] = useState([]);
-    const [cargaProfData, setCargaProfData] = useState([]); // <-- Estado para nuevo gráfico
+    const [cargaProfData, setCargaProfData] = useState([]);
 
     const [loading, setLoading] = useState(true);
-    const [fecha, setFecha] = useState('');
+    const [fechaDesde, setFechaDesde] = useState('');
+    const [fechaHasta, setFechaHasta] = useState('');
     const [recepcionistaName, setRecepcionistaName] = useState('Usuario');
 
     // --- Función ÚNICA de Fetch ---
-    const fetchDashboardData = async (fechaFiltro: string) => {
-        if (!fechaFiltro) return;
+    const fetchDashboardData = async (desde: string, hasta: string) => {
+        if (!desde || !hasta) return;
         try {
             setLoading(true);
-            // LLAMADA A LA API UNIFICADA
-            const response = await fetch(`/api/recepcion/dashboard?fecha=${fechaFiltro}`);
+            // LLAMADA A LA API UNIFICADA con rango de fechas
+            const response = await fetch(`/api/recepcion/dashboard?fechaDesde=${desde}&fechaHasta=${hasta}`);
             const data = await response.json();
 
             if (!response.ok) throw new Error(data.error || "Error al cargar el dashboard");
@@ -115,20 +74,15 @@ export default function RecepcionDashboardPage() {
             console.log("Datos recibidos:", data); // Para depuración
 
             // Actualiza todos los estados con los datos de la API
-            // Usamos || {} y || [] para prevenir errores si alguna parte falta en la respuesta
             setKpis(data.kpis || { turnosPendientes: 0, pacientesEnEspera: 0, promedioEspera: "00:00", pacientesNuevosHoy: 0 });
             setFlujoData(data.flujoPorHora || []);
-            setPieData(data.pieEstadoTurnos || []);
-            setActivityData(data.actividadReciente || []);
-            setCargaProfData(data.cargaProfesionalData || []); // <-- Actualiza estado del nuevo gráfico
+            setCargaProfData(data.cargaProfesionalData || []);
 
         } catch (error) {
             console.error('Error cargando datos del dashboard:', error);
-             // Resetea estados en caso de error para evitar mostrar datos viejos
+            // Resetea estados en caso de error
             setKpis({ turnosPendientes: 0, pacientesEnEspera: 0, promedioEspera: "00:00", pacientesNuevosHoy: 0 });
             setFlujoData([]);
-            setPieData([]);
-            setActivityData([]);
             setCargaProfData([]);
         } finally {
             setLoading(false);
@@ -145,14 +99,22 @@ export default function RecepcionDashboardPage() {
             }
         } catch (error) { console.error('Error al obtener usuario:', error); }
 
-        const hoy = new Date().toLocaleDateString('sv-SE');
-        setFecha(hoy);
-        fetchDashboardData(hoy); // Carga inicial con la fecha de hoy
+        // Rango inicial: últimos 30 días
+        const hoy = new Date();
+        const hace30Dias = new Date();
+        hace30Dias.setDate(hoy.getDate() - 30);
+
+        const hoyStr = hoy.toLocaleDateString('sv-SE');
+        const hace30DiasStr = hace30Dias.toLocaleDateString('sv-SE');
+
+        setFechaDesde(hace30DiasStr);
+        setFechaHasta(hoyStr);
+        fetchDashboardData(hace30DiasStr, hoyStr); // Carga inicial
     }, []); // Array vacío para ejecutar solo una vez
 
     // --- Handler para el filtro ---
     const aplicarFiltro = () => {
-        fetchDashboardData(fecha); // Llama al fetch con la fecha seleccionada
+        fetchDashboardData(fechaDesde, fechaHasta);
     };
 
     return (
@@ -165,20 +127,29 @@ export default function RecepcionDashboardPage() {
 
                     <div className="mt-4 flex flex-wrap items-end gap-3">
                         <div>
-                            <label className="block text-sm font-medium text-blue-100 mb-1">Seleccionar Día</label>
+                            <label className="block text-sm font-medium text-blue-100 mb-1">Desde</label>
                             <input
                                 type="date"
-                                value={fecha}
-                                onChange={(e) => setFecha(e.target.value)}
+                                value={fechaDesde}
+                                onChange={(e) => setFechaDesde(e.target.value)}
+                                className="px-3 py-2 border border-blue-300 rounded-lg text-gray-900"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-blue-100 mb-1">Hasta</label>
+                            <input
+                                type="date"
+                                value={fechaHasta}
+                                onChange={(e) => setFechaHasta(e.target.value)}
                                 className="px-3 py-2 border border-blue-300 rounded-lg text-gray-900"
                             />
                         </div>
                         <button
                             onClick={aplicarFiltro}
-                            className="px-4 py-2 bg-white text-blue-700 font-medium rounded-lg hover:bg-blue-50"
+                            className="px-4 py-2 bg-white text-blue-700 font-medium rounded-lg hover:bg-blue-50 transition-all"
                             disabled={loading}
                         >
-                            {loading ? "Cargando..." : "Aplicar"}
+                            {loading ? "Cargando..." : "Aplicar Filtro"}
                         </button>
                     </div>
                 </header>
@@ -193,27 +164,13 @@ export default function RecepcionDashboardPage() {
 
                 {/* --- SECCIÓN DE GRÁFICOS PRINCIPALES --- */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Gráfico de Líneas - Recibe datos del estado */}
+                    {/* Gráfico de Líneas - Flujo del Día */}
                     <FlujoDiaLineChart data={flujoData} loading={loading} />
 
-                    {/* Gráfico de Barras - Recibe datos del estado */}
+                    {/* Gráfico de Barras - Carga por Profesional */}
                     <CargaProfesionalBarChart data={cargaProfData} loading={loading} />
                 </div>
                 {/* --- FIN SECCIÓN --- */}
-
-
-                {/* Contenido Secundario: Actividad y Torta */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2">
-                         {/* ActivityLog - Recibe datos del estado */}
-                        <ActivityLog activities={activityData} loading={loading} />
-                    </div>
-                    <div>
-                        {/* Gráfico de Torta - Recibe datos del estado */}
-                         {/* Usa el nombre correcto del componente importado */}
-                        <EstadoTurnosPieChart data={pieData} loading={loading} />
-                    </div>
-                </div>
 
             </div>
         </main>

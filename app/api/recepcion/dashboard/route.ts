@@ -1,7 +1,6 @@
 // app/api/recepcion/dashboard/route.ts
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma"; // Asegúrate que la ruta a tu cliente Prisma sea correcta
-import { turnos_estado } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 
 // --- Funciones de Ayuda ---
 
@@ -14,49 +13,31 @@ function formatMSS(ms: number): string {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
-// Formatea la hora como "HH:MM"
-function formatTime(date: Date): string {
-  // Asegúrate de usar la zona horaria correcta para tu ubicación
-  return date.toLocaleTimeString('es-AR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'America/Argentina/Buenos_Aires'
-  });
-}
-
-// Formatea el estado "en_consulta" a "En Consulta"
-function formatEstado(estado: string): string {
-  if (!estado) return ''; // Maneja casos donde el estado podría ser nulo o indefinido
-  return estado
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
-// Mapeo de colores para los estados de turno
-const ESTADO_COLORS: { [key in turnos_estado]: string } = {
-  reservado: "#0088FE",
-  confirmado: "#FFBB28",
-  en_consulta: "#E11D48", // Rojo para destacar
-  atendido: "#00C49F",    // Verde
-  ausente: "#FF8042",     // Naranja
-  cancelado: "#9CA3AF",   // Gris
-};
 // --- FIN Funciones de Ayuda ---
 
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const fecha = searchParams.get("fecha") || new Date().toLocaleDateString('sv-SE'); // YYYY-MM-DD
+    const fechaDesde = searchParams.get("fechaDesde");
+    const fechaHasta = searchParams.get("fechaHasta");
 
-    // Define el inicio y fin del día considerando la zona horaria local (-03:00 para Argentina)
-    const startOfDay = new Date(`${fecha}T00:00:00-03:00`);
-    const endOfDay = new Date(`${fecha}T23:59:59.999-03:00`); // Incluir milisegundos
+    // Si no se especifican fechas, usar últimos 30 días
+    const hoy = new Date();
+    const hace30Dias = new Date();
+    hace30Dias.setDate(hoy.getDate() - 30);
+
+    const desde = fechaDesde || hace30Dias.toLocaleDateString('sv-SE');
+    const hasta = fechaHasta || hoy.toLocaleDateString('sv-SE');
+
+    // Define el rango de fechas considerando la zona horaria local (-03:00 para Argentina)
+    const startOfRange = new Date(`${desde}T00:00:00-03:00`);
+    const endOfRange = new Date(`${hasta}T23:59:59.999-03:00`);
 
     // --- Consulta Única de Turnos ---
     // Seleccionamos todos los campos necesarios para evitar múltiples consultas
-    const turnosDelDia = await prisma.turnos.findMany({
+    const turnosDelRango = await prisma.turnos.findMany({
       where: {
-        inicio: { gte: startOfDay, lte: endOfDay },
+        inicio: { gte: startOfRange, lte: endOfRange },
       },
       select: {
         estado: true,
@@ -70,11 +51,10 @@ export async function GET(req: Request) {
       }
     });
 
-    // --- Consulta Pacientes Nuevos ---
-    const pacientesNuevosHoy = await prisma.pacientes.count({
+    // --- Consulta Pacientes Nuevos en el rango ---
+    const pacientesNuevosRango = await prisma.pacientes.count({
       where: {
-        // Asegúrate que tu modelo 'pacientes' tenga 'fecha_registro'
-        fecha_registro: { gte: startOfDay, lte: endOfDay }
+        fecha_registro: { gte: startOfRange, lte: endOfRange }
       }
     });
 
@@ -84,37 +64,30 @@ export async function GET(req: Request) {
     let turnosConEspera = 0;
     let pacientesEnEspera = 0;
     let turnosPendientes = 0;
-    const actividades: any[] = [];
     const horas = Array.from({ length: 13 }, (_, i) => i + 8); // Rango de horas (8 AM a 8 PM)
     const flujoPorHora = horas.map(hora => ({ name: `${String(hora).padStart(2, '0')}:00`, Agendados: 0, Atendidos: 0 }));
-    const estadoCounts: { [key in turnos_estado]?: number } = {};
     const cargaProfesionalCounts: { [key: number]: { count: number; name: string } } = {};
 
     // --- Procesamiento de Datos ---
-    for (const turno of turnosDelDia) {
-      // Conteo para gráfico de torta (Estados)
-      estadoCounts[turno.estado] = (estadoCounts[turno.estado] || 0) + 1;
-
+    for (const turno of turnosDelRango) {
       // Cálculo Carga Profesional (contar turnos no cancelados)
       if (turno.estado !== 'cancelado') {
         const profId = turno.profesional_id;
-        // Solo guardamos el nombre la primera vez que vemos al profesional
         if (!cargaProfesionalCounts[profId]) {
           const nombreCompleto = `${turno.profesionales.usuarios.nombre} ${turno.profesionales.usuarios.apellido}`;
           cargaProfesionalCounts[profId] = { count: 0, name: nombreCompleto };
         }
-        cargaProfesionalCounts[profId].count++; // Incrementamos el contador de turnos
+        cargaProfesionalCounts[profId].count++;
       }
 
       // Cálculo Flujo por Hora (contar turnos no cancelados)
       if (turno.estado !== 'cancelado') {
-        // Obtenemos la hora local del turno
         const horaTurno = new Date(turno.inicio).getHours();
         const slot = flujoPorHora.find(h => h.name === `${String(horaTurno).padStart(2, '0')}:00`);
         if (slot) {
-          slot.Agendados += 1; // Sumamos a Agendados
+          slot.Agendados += 1;
           if (turno.estado === 'atendido') {
-            slot.Atendidos += 1; // Sumamos a Atendidos si corresponde
+            slot.Atendidos += 1;
           }
         }
       }
@@ -127,22 +100,10 @@ export async function GET(req: Request) {
       // Cálculo Tiempo de Espera
       if (turno.fecha_confirmacion && turno.fecha_en_consulta) {
         const esperaMs = turno.fecha_en_consulta.getTime() - turno.fecha_confirmacion.getTime();
-        // Solo contamos esperas positivas
         if (esperaMs > 0) {
           totalWaitTimeMs += esperaMs;
           turnosConEspera++;
         }
-      }
-
-      // Log de Actividad Reciente (solo si fue confirmado)
-      if (turno.fecha_confirmacion) {
-        const paciente = `${turno.pacientes.nombre} ${turno.pacientes.apellido}`;
-        const profesional = `${turno.profesionales.usuarios.nombre} ${turno.profesionales.usuarios.apellido}`;
-        actividades.push({
-          timestamp: turno.fecha_confirmacion.getTime(),
-          time: formatTime(turno.fecha_confirmacion),
-          description: `**${paciente}** ha sido **confirmado** para su turno con **${profesional}**.`,
-        });
       }
     }
 
@@ -151,38 +112,19 @@ export async function GET(req: Request) {
       turnosPendientes,
       pacientesEnEspera,
       promedioEspera: formatMSS(turnosConEspera > 0 ? (totalWaitTimeMs / turnosConEspera) : 0),
-      pacientesNuevosHoy,
-      // Guardamos estos por si los necesitas en el futuro, pero no se muestran en los KPIs principales
-      _ausencias: ausencias,
-      _turnosTotales: turnosDelDia.length,
-      _turnosAtendidos: estadoCounts['atendido'] || 0,
+      pacientesNuevosHoy: pacientesNuevosRango,
     };
-
-    // Datos para el gráfico de torta de estados
-    const pieEstadoTurnos = Object.entries(estadoCounts).map(([name, value]) => ({
-      name: formatEstado(name),
-      value: value || 0,
-      color: ESTADO_COLORS[name as turnos_estado] || '#CCCCCC', // Asigna color o gris por defecto
-    }));
 
     // Datos para el gráfico de barras de carga profesional
     const cargaProfesionalData = Object.values(cargaProfesionalCounts)
       .map(prof => ({ name: prof.name, Turnos: prof.count }))
-      .sort((a, b) => b.Turnos - a.Turnos); // Ordena de mayor a menor carga
-
-    // Datos para el log de actividad (los 5 más recientes)
-    const actividadReciente = actividades
-      .sort((a, b) => b.timestamp - a.timestamp) // Ordena por timestamp descendente
-      .slice(0, 5); // Toma solo los primeros 5
+      .sort((a, b) => b.Turnos - a.Turnos);
 
     // --- Respuesta JSON Final ---
-    // Enviamos todos los datos necesarios para el dashboard
     return NextResponse.json({
       kpis,
       flujoPorHora,         // Para el gráfico de líneas
-      pieEstadoTurnos,      // Para el gráfico de torta
-      actividadReciente,    // Para el log de actividad
-      cargaProfesionalData  // Para el nuevo gráfico de barras
+      cargaProfesionalData  // Para el gráfico de barras
     });
 
   } catch (error) {
