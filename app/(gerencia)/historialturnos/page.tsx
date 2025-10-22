@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 // Tipos
@@ -86,6 +86,10 @@ export default function HistorialTurnosPage() {
     busqueda: '',
   });
 
+  // Estados de paginación
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [itemsPorPagina, setItemsPorPagina] = useState(10);
+
   useEffect(() => {
     fetchTurnos();
   }, []);
@@ -150,6 +154,23 @@ export default function HistorialTurnosPage() {
       estado: '',
       busqueda: '',
     });
+    setPaginaActual(1); // Resetear a primera página al limpiar filtros
+  };
+
+  // Cálculos de paginación
+  const indiceUltimoItem = paginaActual * itemsPorPagina;
+  const indicePrimerItem = indiceUltimoItem - itemsPorPagina;
+  const turnosPaginados = turnosFiltrados.slice(indicePrimerItem, indiceUltimoItem);
+  const totalPaginas = Math.ceil(turnosFiltrados.length / itemsPorPagina);
+
+  // Cuando cambian los filtros, volver a página 1
+  useEffect(() => {
+    setPaginaActual(1);
+  }, [filtros, itemsPorPagina]);
+
+  const cambiarPagina = (numeroPagina: number) => {
+    setPaginaActual(numeroPagina);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -311,6 +332,23 @@ export default function HistorialTurnosPage() {
                 {loading ? 'Cargando turnos...' : `${turnosFiltrados.length} ${turnosFiltrados.length === 1 ? 'turno encontrado' : 'turnos encontrados'}`}
               </p>
             </div>
+
+            {/* Selector de items por página */}
+            {!loading && turnosFiltrados.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-600">Mostrar:</span>
+                <select
+                  value={itemsPorPagina}
+                  onChange={(e) => setItemsPorPagina(Number(e.target.value))}
+                  className="px-3 py-1.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none font-medium text-sm"
+                >
+                  <option value={10}>10</option>
+                  <option value={15}>15</option>
+                  <option value={20}>20</option>
+                </select>
+                <span className="text-sm font-medium text-gray-600">por página</span>
+              </div>
+            )}
           </div>
 
           {loading ? (
@@ -361,7 +399,7 @@ export default function HistorialTurnosPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {turnosFiltrados.map((turno, index) => {
+                  {turnosPaginados.map((turno, index) => {
                     const config = estadoConfig[turno.estado] || {
                       label: turno.estado,
                       color: 'text-gray-700',
@@ -446,6 +484,90 @@ export default function HistorialTurnosPage() {
                   })}
                 </tbody>
               </table>
+
+              {/* Controles de paginación */}
+              {totalPaginas > 1 && (
+                <div className="px-6 py-4 border-t-2 border-green-100 bg-gradient-to-r from-gray-50 to-green-50/30">
+                  <div className="flex items-center justify-between">
+                    {/* Info de página */}
+                    <div className="text-sm text-gray-600 font-medium">
+                      Mostrando {indicePrimerItem + 1} a {Math.min(indiceUltimoItem, turnosFiltrados.length)} de {turnosFiltrados.length} turnos
+                    </div>
+
+                    {/* Botones de navegación */}
+                    <div className="flex items-center gap-2">
+                      {/* Botón Primera página */}
+                      <button
+                        onClick={() => cambiarPagina(1)}
+                        disabled={paginaActual === 1}
+                        className="px-3 py-2 rounded-lg border-2 border-gray-200 text-gray-700 font-medium hover:bg-green-50 hover:border-green-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      >
+                        ««
+                      </button>
+
+                      {/* Botón Anterior */}
+                      <button
+                        onClick={() => cambiarPagina(paginaActual - 1)}
+                        disabled={paginaActual === 1}
+                        className="px-3 py-2 rounded-lg border-2 border-gray-200 text-gray-700 font-medium hover:bg-green-50 hover:border-green-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      >
+                        «
+                      </button>
+
+                      {/* Números de página */}
+                      {Array.from({ length: totalPaginas }, (_, i) => i + 1)
+                        .filter(num => {
+                          // Mostrar solo páginas cercanas a la actual
+                          if (totalPaginas <= 7) return true;
+                          if (num === 1 || num === totalPaginas) return true;
+                          if (num >= paginaActual - 1 && num <= paginaActual + 1) return true;
+                          return false;
+                        })
+                        .map((num, index, array) => {
+                          // Agregar "..." si hay saltos
+                          const prevNum = array[index - 1];
+                          const showEllipsis = prevNum && num - prevNum > 1;
+
+                          return (
+                            <React.Fragment key={num}>
+                              {showEllipsis && (
+                                <span className="px-3 py-2 text-gray-500">...</span>
+                              )}
+                              <button
+                                onClick={() => cambiarPagina(num)}
+                                className={`px-4 py-2 rounded-lg border-2 font-medium transition-all ${
+                                  paginaActual === num
+                                    ? 'bg-green-600 text-white border-green-600 shadow-lg'
+                                    : 'border-gray-200 text-gray-700 hover:bg-green-50 hover:border-green-300'
+                                }`}
+                              >
+                                {num}
+                              </button>
+                            </React.Fragment>
+                          );
+                        })}
+
+                      {/* Botón Siguiente */}
+                      <button
+                        onClick={() => cambiarPagina(paginaActual + 1)}
+                        disabled={paginaActual === totalPaginas}
+                        className="px-3 py-2 rounded-lg border-2 border-gray-200 text-gray-700 font-medium hover:bg-green-50 hover:border-green-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      >
+                        »
+                      </button>
+
+                      {/* Botón Última página */}
+                      <button
+                        onClick={() => cambiarPagina(totalPaginas)}
+                        disabled={paginaActual === totalPaginas}
+                        className="px-3 py-2 rounded-lg border-2 border-gray-200 text-gray-700 font-medium hover:bg-green-50 hover:border-green-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      >
+                        »»
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
