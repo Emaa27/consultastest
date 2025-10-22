@@ -138,7 +138,6 @@ export default function EspecialidadesPage() {
             </div>
             Especialidades Médicas
           </h1>
-          <p className="text-gray-600">Gestión del catálogo de servicios</p>
         </div>
         <button
           onClick={() => setShowForm(true)}
