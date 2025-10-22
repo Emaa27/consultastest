@@ -53,6 +53,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
             usuarios: {
               select: {
                 nombre: true,
+                apellido: true,
                 email: true,
               },
             },
@@ -61,7 +62,11 @@ export async function GET(request: NextRequest, context: RouteContext) {
         consultas: {
           orderBy: { fecha_consulta: 'desc' },
           include: {
-            diagnosticos: true,
+            diagnosticos: {
+              include: {
+                medicamentos: true, // ✅ INCLUIR MEDICAMENTOS
+              },
+            },
             historias_clinicas: { // relación correcta
               select: {
                 paciente_id: true,

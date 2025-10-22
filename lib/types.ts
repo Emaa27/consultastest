@@ -1,4 +1,4 @@
-// types.ts - Agregar o actualizar estos tipos
+// types.ts - Tipos actualizados con soporte para diagnósticos y medicamentos
 
 export type HistoriaClinicaBase = {
   historia_id: number;
@@ -61,7 +61,7 @@ export type Consulta = {
 export type HistoriaClinicaCompleta = HistoriaClinicaBase & {
   pacientes: Paciente;
   medico_cabecera: MedicoCabecera | null;
-  consultas: Consulta[];
+  consultas: ConsultaDetalle[];
 };
 
 export type UserData = {
@@ -74,29 +74,51 @@ export type UserData = {
   profesionId: number;
 };
 
-// Tipo detallado para consultas individuales
+// Tipos para medicamentos
+export type Medicamento = {
+  medicamento_id: number;
+  droga: string;
+  via_administracion: string;
+  dosis: string;
+  frecuencia?: string | null;
+};
+
+// Tipos para diagnósticos
+export type Diagnostico = {
+  diagnostico_id: number;
+  juicio_clinico?: string | null;
+  diagnostico_presuntivo?: string | null;
+  indicacion_terapeutica?: string | null;
+  requiere_derivacion?: boolean;
+  especialidad_derivacion?: string | null;
+  medicamentos?: Medicamento[];
+};
+
+// Tipo detallado para consultas individuales con diagnósticos (PLURAL)
 export type ConsultaDetalle = {
   consulta_id: number;
   historia_id: number;
   profesional_id: number;
   fecha_consulta: string;
   motivo_consulta: string;
+  enfermedad_actual?: string | null;
   sintomas: string | null;
   diagnostico: string | null;
   tratamiento: string | null;
   observaciones: string | null;
   notas_evolucion: string | null;
-  profesionales: {
+  profesionales?: {
     profesional_id: number;
     usuarios: {
-      usuario_id: number;
+      usuario_id?: number;
       nombre: string;
       apellido: string;
-      email: string | null;
+      email?: string | null;
     };
-    profesiones: {
+    profesiones?: {
       profesion_id: number;
       nombre: string;
     };
   };
+  diagnosticos: Diagnostico[]; // ✅ PLURAL - Este es el correcto
 };
