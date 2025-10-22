@@ -93,7 +93,7 @@ type Agenda = {
   hora_inicio: string;
   hora_fin: string;
   slot_min: number;
-}
+};
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function formatearFecha(fechaStr: string) {
@@ -270,6 +270,7 @@ export default function AgendaDiariaPage() {
             inicio: inicioStr,
             fin: finStr,
             estado: "disponible",
+            fecha_confirmacion: new Date().toISOString(),
             pacientes: null,
             profesionales: undefined,
           });
@@ -490,7 +491,7 @@ export default function AgendaDiariaPage() {
           >
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2 items-center gap-2">
                   <Calendar className="w-4 h-4 text-[#6596d8]" />
                   Fecha
                 </label>
@@ -504,7 +505,7 @@ export default function AgendaDiariaPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2 items-center gap-2">
                   <Clock className="w-4 h-4 text-[#6596d8]" />
                   Horario
                 </label>
@@ -524,7 +525,7 @@ export default function AgendaDiariaPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2 items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-[#6596d8]" />
                   Estado
                 </label>
