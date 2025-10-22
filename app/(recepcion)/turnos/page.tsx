@@ -103,7 +103,7 @@ export default function TurnosPage() {
                 )}
             </button>
 
-            {/* 🔍 Buscador al lado derecho */}
+            {/* Buscador*/}
             <div className="relative w-64">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                 <svg
@@ -135,7 +135,6 @@ export default function TurnosPage() {
           </div>
         </div>
       </div>
-
       <EstadosTurnosLegend />
       {/* Calendario */}
       {isLoadingTurnos ? (
