@@ -37,7 +37,7 @@ export async function GET(req: Request) {
       where,
       include: {
         pacientes: { include: { obras_sociales: true } }, // datos del paciente (con obra social)
-        profesionales: { include: { usuarios: true } }, // datos del profesional y su usuario
+        profesionales: { include: { usuarios: true, profesiones: true } }, // datos del profesional y su usuario
       },
       orderBy: { inicio: "asc" }, // ordenar cronológicamente
     });

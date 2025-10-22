@@ -65,7 +65,7 @@ type Turno = {
   inicio: string;
   fin?: string;
   estado: EstadoTurno;
-  fecha_confirmacion: string;
+  fecha_confirmacion?: string | null;
   paciente_id?: number; // <- Agregá este campo que viene de la tabla turnos
   pacientes?: { 
     paciente_id: number; // <- Y este que viene de la tabla pacientes
@@ -93,7 +93,7 @@ type Agenda = {
   hora_inicio: string;
   hora_fin: string;
   slot_min: number;
-};
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function formatearFecha(fechaStr: string) {
@@ -270,7 +270,7 @@ export default function AgendaDiariaPage() {
             inicio: inicioStr,
             fin: finStr,
             estado: "disponible",
-            fecha_confirmacion: new Date().toISOString(),
+            fecha_confirmacion: null,
             pacientes: null,
             profesionales: undefined,
           });
@@ -491,7 +491,7 @@ export default function AgendaDiariaPage() {
           >
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 items-center gap-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-[#6596d8]" />
                   Fecha
                 </label>
@@ -505,7 +505,7 @@ export default function AgendaDiariaPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 items-center gap-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                   <Clock className="w-4 h-4 text-[#6596d8]" />
                   Horario
                 </label>
@@ -525,7 +525,7 @@ export default function AgendaDiariaPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 items-center gap-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-[#6596d8]" />
                   Estado
                 </label>
@@ -614,7 +614,7 @@ export default function AgendaDiariaPage() {
                         {turnosConfirmados.map((turno) => {
                           const ocupado = !!turno.pacientes;
                           const colorGradient = getEstadoColor(turno.estado, ocupado);
-                          const tiempoConfirmado = diferenciaConAhora(turno.fecha_confirmacion, ahora);
+                          const tiempoConfirmado = turno.fecha_confirmacion ? diferenciaConAhora(turno.fecha_confirmacion, ahora) : "--:--";
                           const horaFin = turno.fin || (() => {
                             const inicio = new Date(turno.inicio);
                             inicio.setMinutes(inicio.getMinutes() + 30);
@@ -647,9 +647,11 @@ export default function AgendaDiariaPage() {
                                 </div>
 
                                 <div className="text-right flex gap-1">
-                                  <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-sm font-medium">
-                                    {tiempoConfirmado}
-                                  </span>
+                                  {turno.fecha_confirmacion && (
+                                    <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-sm font-medium">
+                                      {tiempoConfirmado}
+                                    </span>
+                                  )}
                                   <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-sm font-medium">
                                     {getEstadoLabel(turno.estado)}
                                   </span>
