@@ -91,7 +91,7 @@ export default function NavbarProfesional() {
   const menuItems = [
     { id: 'agenda', label: 'Mi Agenda', icon: Calendar, href: '/agendadiaria' },
     { id: 'historias', label: 'Historias Clínicas', icon: FileText, href: '/historias' },
-    { id: 'dashboard', label: 'Dashboard', icon: BarChart3, href: '/dashboard' },
+    { id: 'dashboard', label: 'Dashboard', icon: BarChart3, href: '/dashboardProf' },
   ];
 
   const isActive = (href: string) => pathname === href || pathname?.startsWith(href + '/');

@@ -22,6 +22,7 @@ export type Paciente = {
   nombre: string;
   apellido: string;
   documento: string;
+  estado?: string;
 };
 
 export type Profesional = {
@@ -29,6 +30,7 @@ export type Profesional = {
   matricula: string;
   usuarios: { nombre: string; apellido: string };
   profesiones: { nombre: string };
+  estado?: string;
 };
 
 export type Agenda = {
