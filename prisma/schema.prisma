@@ -178,6 +178,7 @@ model turnos {
   fecha_confirmacion DateTime?       @db.DateTime(0)
   fecha_en_consulta  DateTime?       @db.DateTime(0)
   fecha_atendido     DateTime?       @db.DateTime(0)
+  observaciones      String?         @db.Text
   pacientes          pacientes       @relation(fields: [paciente_id], references: [paciente_id], map: "FK_turnos_pacientes")
   profesionales      profesionales   @relation(fields: [profesional_id], references: [profesional_id], map: "FK_turnos_profesionales")
   obras_sociales     obras_sociales? @relation(fields: [obra_social_id], references: [obra_social_id], onDelete: Restrict, map: "fk_turno_os")

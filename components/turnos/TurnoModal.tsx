@@ -443,7 +443,13 @@ if (!rOcupados.ok) {
 }
 const turnosOcupados = await rOcupados.json();
 const horasOcupadas = new Set<string>();
+// Solo marcar como ocupados los turnos que NO están cancelados ni ausentes
 (turnosOcupados || []).forEach((t: any) => {
+  // Ignorar turnos cancelados y ausentes - esos slots quedan disponibles
+  if (t?.estado === 'cancelado' || t?.estado === 'ausente') {
+    return;
+  }
+
   const d = new Date(t?.inicio);
   if (!isNaN(d.getTime())) {
     horasOcupadas.add(formatHM(d));

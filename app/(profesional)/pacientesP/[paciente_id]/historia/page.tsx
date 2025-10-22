@@ -36,6 +36,7 @@ export default function HistoriaClinicaPage({
   const [consultaCreada, setConsultaCreada] = useState(false);
   const [turnoId, setTurnoId] = useState<number | null>(null);
   const [turnoEstado, setTurnoEstado] = useState<string | null>(null);
+  const [observacionesConsulta, setObservacionesConsulta] = useState<string>('');
   
   const [hcData, setHcData] = useState<HistoriaClinicaCompleta | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -148,15 +149,20 @@ export default function HistoriaClinicaPage({
       alert('Error: No se pudo identificar al profesional o la historia clínica');
       return;
     }
-    
+
     setIsFormLoading(true);
-    
+
+    // Guardar las observaciones para usarlas al finalizar el turno
+    if (formData.observaciones) {
+      setObservacionesConsulta(formData.observaciones);
+    }
+
     const payload = {
       ...formData,
       historia_id: hcData.historia_id,
       profesional_id: user.profesionalId,
     };
-    
+
     try {
       const res = await fetch(`/api/historiaclinica/${pacienteId}/consulta`, {
         method: 'POST',
@@ -168,13 +174,13 @@ export default function HistoriaClinicaPage({
         const errorData = await res.json();
         throw new Error(errorData.error || 'Falló el registro de la consulta');
       }
-      
+
       const result = await res.json();
       setConsultaCreada(true);
-      
+
       alert('✅ Consulta registrada con éxito. Ahora puedes finalizar la atención.');
-      await cargarHistoriaClinica(); 
-      
+      await cargarHistoriaClinica();
+
     } catch (err) {
       alert('❌ Error al registrar la consulta: ' + (err as Error).message);
     } finally {
@@ -192,31 +198,34 @@ export default function HistoriaClinicaPage({
       alert('❌ Solo puedes finalizar consultas que estén en estado "En Consulta".\n\nEstado actual: ' + turnoEstado);
       return;
     }
-    
+
     const confirmar = window.confirm(
       '¿Está seguro que desea finalizar la consulta y marcar el turno como atendido?\n\nEsto cerrará la historia clínica y volverá a la agenda.'
     );
-    
+
     if (!confirmar) return;
-    
+
     setIsFormLoading(true);
-    
+
     try {
       const res = await fetch(`/api/turnos/${turnoId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ estado: 'atendido' })
+        body: JSON.stringify({
+          estado: 'atendido',
+          observaciones: observacionesConsulta || null
+        })
       });
-      
+
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.error || 'Error al actualizar el estado del turno');
       }
-      
+
       alert('✅ Consulta finalizada exitosamente. El turno ha sido marcado como atendido.');
-      
+
       window.location.href = '/agendadiaria';
-      
+
     } catch (err) {
       alert('❌ Error al finalizar consulta: ' + (err as Error).message);
       setIsFormLoading(false);

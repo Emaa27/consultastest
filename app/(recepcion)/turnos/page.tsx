@@ -123,12 +123,12 @@ export default function TurnosPage() {
               </span>
               <input
                 type="text"
-                placeholder="Buscar..."
+                placeholder="Apellido y nombre o DNI..."
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 
+                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300
                      focus:ring-2 focus:ring-[#6596d8] focus:border-[#6596d8]
-                     outline-none text-gray-700 placeholder-gray-400 shadow-sm 
+                     outline-none text-gray-700 placeholder-gray-400 shadow-sm
                      transition-all"
               />
             </div>

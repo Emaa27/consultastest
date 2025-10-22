@@ -9,6 +9,7 @@ type TurnoDetalle = {
   inicio: string | Date;
   fin: string | Date | null;
   duracion_min: number | null;
+  observaciones?: string | null; // Observaciones del médico para recepción
   profesionales: {
     usuarios: { nombre: string; apellido: string };
     profesiones: { nombre: string };
@@ -183,29 +184,32 @@ export default function TurnoDetalleModal({ turnoId, open, onOpenChange, onUpdat
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
                 Estado del Turno
               </p>
-              
+
               {!editingEstado ? (
                 <div className="flex items-center justify-between">
                   <span
-                    className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm 
+                    className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm
                               font-medium border ${getEstadoInfo(data.estado).color}`}
                   >
                     {getEstadoInfo(data.estado).label}
                   </span>
-                  <button
-                    onClick={() => {
-                      setEditingEstado(true);
-                      setNuevoEstado(data.estado);
-                    }}
-                    className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 
-                             transition-colors focus:outline-none focus:ring-2 
-                             focus:ring-blue-300"
-                    aria-label="Editar estado"
-                    title="Cambiar estado"
-                    type="button"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
+                  {/* Solo mostrar botón editar si NO está atendido */}
+                  {data.estado !== 'atendido' && (
+                    <button
+                      onClick={() => {
+                        setEditingEstado(true);
+                        setNuevoEstado(data.estado);
+                      }}
+                      className="p-2 rounded-lg text-blue-600 hover:bg-blue-50
+                               transition-colors focus:outline-none focus:ring-2
+                               focus:ring-blue-300"
+                      aria-label="Editar estado"
+                      title="Cambiar estado"
+                      type="button"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -342,6 +346,38 @@ export default function TurnoDetalleModal({ turnoId, open, onOpenChange, onUpdat
                 </p>
               </div>
             </section>
+
+            {/* Observaciones - Solo visible cuando el turno está atendido */}
+            {data.estado === 'atendido' && data.observaciones && (
+              <>
+                <hr className="border-gray-200" />
+                <section className="bg-amber-50 border-l-4 border-amber-400 rounded-lg p-4">
+                  <div className="flex items-start gap-2">
+                    <svg
+                      className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold text-amber-900 uppercase tracking-wide mb-1">
+                        Observaciones del Profesional
+                      </p>
+                      <p className="text-sm text-amber-800 whitespace-pre-wrap">
+                        {data.observaciones}
+                      </p>
+                    </div>
+                  </div>
+                </section>
+              </>
+            )}
 
             {/* Botón cerrar */}
             <div className="pt-2 border-t border-gray-200">

@@ -281,7 +281,7 @@ export default function AgendaDiariaPage() {
 
       console.log("Turnos generados:", turnosGenerados.length);
 
-      // Combino turnos generados con los reales (ocupados reemplazan los vacíos)
+      // Combino turnos generados con los reales
       const turnosCombinados = turnosGenerados.map((t) => {
         const real = turnosReales.find((r: any) => {
           const inicioReal = new Date(r.inicio).getTime();
@@ -297,15 +297,22 @@ export default function AgendaDiariaPage() {
             fin.setMinutes(inicio.getMinutes() + Number(real.duracion_min));
             real.fin = fin.toISOString();
           }
+
+          // Si está cancelado o ausente, mantener el slot disponible (no reemplazarlo)
+          // El turno cancelado se agregará después para mostrar ambos
+          if (real.estado === 'cancelado' || real.estado === 'ausente') {
+            return t; // Mantener slot disponible
+          }
+
           return real;
         }
         return t;
       });
 
-      // También agregar turnos reales que no coincidan con ningún generado
+      // Agregar turnos cancelados/ausentes y turnos que no coincidan con ningún generado
       turnosReales.forEach((real: any) => {
-        const yaExiste = turnosCombinados.some(t => t.turno_id === real.turno_id);
-        if (!yaExiste) {
+        // Si es cancelado o ausente, siempre agregarlo (además del slot disponible)
+        if (real.estado === 'cancelado' || real.estado === 'ausente') {
           if (!real.fin && real.duracion_min) {
             const inicio = new Date(real.inicio);
             const fin = new Date(inicio);
@@ -313,6 +320,18 @@ export default function AgendaDiariaPage() {
             real.fin = fin.toISOString();
           }
           turnosCombinados.push(real);
+        } else {
+          // Para otros estados, solo agregar si no existe
+          const yaExiste = turnosCombinados.some(t => t.turno_id === real.turno_id);
+          if (!yaExiste) {
+            if (!real.fin && real.duracion_min) {
+              const inicio = new Date(real.inicio);
+              const fin = new Date(inicio);
+              fin.setMinutes(inicio.getMinutes() + Number(real.duracion_min));
+              real.fin = fin.toISOString();
+            }
+            turnosCombinados.push(real);
+          }
         }
       });
 

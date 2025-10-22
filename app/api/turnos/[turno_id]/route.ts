@@ -19,7 +19,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
   try {
     const body = await request.json();
-    const { estado } = body;
+    const { estado, observaciones } = body;
 
     if (!estado) {
       return NextResponse.json({ error: 'El campo estado es requerido' }, { status: 400 });
@@ -45,25 +45,21 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Turno no encontrado' }, { status: 404 });
     }
 
-    let data = {
+    let data: any = {
       estado: estado,
     };
+
     if (estado == "confirmado"){
-      data = {
-        estado: estado,
-        fecha_confirmacion: new Date(),
-      }
+      data.fecha_confirmacion = new Date();
     }
     if (estado == "en_consulta"){
-      data = {
-        estado: estado,
-        fecha_en_consulta: new Date(),
-      }
+      data.fecha_en_consulta = new Date();
     }
     if (estado == "atendido"){
-      data = {
-        estado: estado,
-        fecha_atendido: new Date(),
+      data.fecha_atendido = new Date();
+      // Si se pasan observaciones al marcar como atendido, las guardamos
+      if (observaciones !== undefined) {
+        data.observaciones = observaciones;
       }
     }
 

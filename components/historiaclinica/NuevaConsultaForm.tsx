@@ -27,6 +27,7 @@ export const NuevaConsultaForm = ({
         diagnostico_presuntivo: '',
         indicacion_terapeutica: '',
         notas_evolucion: '',
+        observaciones: '', // Observaciones para el recepcionista
     });
 
     // Estados para medicamentos
@@ -281,14 +282,32 @@ export const NuevaConsultaForm = ({
 
             {/* Notas de Evolución */}
             <h3 className="text-base font-semibold text-gray-700 pt-2">Notas de Evolución</h3>
-            <textarea 
-                name="notas_evolucion" 
-                placeholder="Observaciones" 
-                value={formState.notas_evolucion} 
-                onChange={handleChange} 
-                rows={3} 
-                className="w-full p-2 border rounded" 
+            <textarea
+                name="notas_evolucion"
+                placeholder="Observaciones médicas internas"
+                value={formState.notas_evolucion}
+                onChange={handleChange}
+                rows={3}
+                className="w-full p-2 border rounded"
             />
+
+            {/* Observaciones para Recepción */}
+            <div className="border-t pt-4 mt-4">
+                <h3 className="text-base font-semibold text-gray-700">
+                    Observaciones para Recepción
+                </h3>
+                <p className="text-xs text-gray-500 mb-2">
+                    Estas observaciones serán visibles para el personal de recepción cuando el turno esté atendido
+                </p>
+                <textarea
+                    name="observaciones"
+                    placeholder="Ej: Requiere seguimiento telefónico, Solicitar estudios previos en próxima consulta, etc."
+                    value={formState.observaciones}
+                    onChange={handleChange}
+                    rows={3}
+                    className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-300"
+                />
+            </div>
 
             {/* Botón Submit */}
             <button

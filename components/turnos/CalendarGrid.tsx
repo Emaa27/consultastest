@@ -65,13 +65,16 @@ export default function CalendarGrid({
         const startOfToday = new Date(now);
         startOfToday.setHours(0, 0, 0, 0);
 
+        // Hora de corte: 1 hora antes de la hora actual
+        const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+
         const withinHistoric =
           filtros.mostrarHistorico ||
-          ( // si no mostramos histórico: hoy desde ahora; futuro todo; pasado nada
+          ( // si no mostramos histórico: hoy desde 1 hora atrás; futuro todo; pasado nada
             (day.getFullYear() === now.getFullYear() &&
               day.getMonth() === now.getMonth() &&
               day.getDate() === now.getDate()
-              ? inicio >= now
+              ? inicio >= oneHourAgo // Mostrar desde 1 hora antes
               : day > startOfToday)
           );
 
@@ -85,14 +88,27 @@ export default function CalendarGrid({
 
         const q = norm(busqueda || "");
 
-        const pacienteNombre = norm(
+        // Buscar en ambos órdenes: "nombre apellido" y "apellido nombre", también por DNI
+        const pacienteNombre1 = norm(
           `${t.pacientes?.nombre ?? ""} ${t.pacientes?.apellido ?? ""}`
         );
-        const profesionalNombre = norm(
+        const pacienteNombre2 = norm(
+          `${t.pacientes?.apellido ?? ""} ${t.pacientes?.nombre ?? ""}`
+        );
+        const pacienteDni = norm(t.pacientes?.documento ?? "");
+        const profesionalNombre1 = norm(
           `${t.profesionales?.usuarios?.nombre ?? ""} ${t.profesionales?.usuarios?.apellido ?? ""}`
         );
+        const profesionalNombre2 = norm(
+          `${t.profesionales?.usuarios?.apellido ?? ""} ${t.profesionales?.usuarios?.nombre ?? ""}`
+        );
 
-        const matchesSearch = !q || pacienteNombre.includes(q) || profesionalNombre.includes(q);
+        const matchesSearch = !q ||
+          pacienteNombre1.includes(q) ||
+          pacienteNombre2.includes(q) ||
+          pacienteDni.includes(q) ||
+          profesionalNombre1.includes(q) ||
+          profesionalNombre2.includes(q);
         return (
           matchesDay &&
           matchesProfesional &&
