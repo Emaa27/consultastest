@@ -370,12 +370,15 @@ export default function HistorialTurnosPage() {
                     };
 
                     return (
-                      <tr 
-                        key={turno.turno_id} 
+                      <tr
+                        key={turno.turno_id}
                         className="hover:bg-green-50/30 transition-colors duration-150"
                         style={{
                           animationDelay: `${index * 30}ms`,
-                          animation: 'fadeInRow 0.3s ease-out forwards',
+                          animationName: 'fadeInRow',
+                          animationDuration: '0.3s',
+                          animationTimingFunction: 'ease-out',
+                          animationFillMode: 'forwards',
                           opacity: 0
                         }}
                       >

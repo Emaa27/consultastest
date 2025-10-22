@@ -269,7 +269,10 @@ export default function EspecialidadesPage() {
                   }`}
                   style={{
                     animationDelay: `${index * 50}ms`,
-                    animation: 'fadeInCard 0.4s ease-out forwards',
+                    animationName: 'fadeInCard',
+                    animationDuration: '0.4s',
+                    animationTimingFunction: 'ease-out',
+                    animationFillMode: 'forwards',
                     opacity: 0
                   }}
                 >
@@ -351,7 +354,7 @@ export default function EspecialidadesPage() {
       {showForm && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl border-2 border-green-100 transform animate-slideUp">
-            <div className="relative flex justify-between items-center mb-6 pb-4 border-b-2 border-green-50 bg-gradient-to-r from-green-50 to-emerald-50 -m-6 mb-6 p-6 rounded-t-2xl">
+            <div className="relative flex justify-between items-center mb-6 pb-4 border-b-2 border-green-50 bg-gradient-to-r from-green-50 to-emerald-50 -m-6 p-6 rounded-t-2xl">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-white rounded-lg shadow-sm">
                   <EspecialidadIcon className="w-6 h-6 text-green-600" />

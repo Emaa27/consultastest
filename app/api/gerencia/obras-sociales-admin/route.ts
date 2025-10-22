@@ -5,9 +5,18 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const estado = searchParams.get('estado');
+    const busqueda = searchParams.get('busqueda');
 
     const where: any = {};
-    if (estado && estado !== 'todos') where.estado = estado;
+    if (estado && estado !== 'todos') {
+      where.estado = estado;
+    }
+    if (busqueda && busqueda.trim()) {
+      // MySQL es case-insensitive por defecto, así que usamos contains sin mode
+      where.nombre = {
+        contains: busqueda.trim(),
+      };
+    }
 
     const obrasSociales = await prisma.obras_sociales.findMany({
       where,

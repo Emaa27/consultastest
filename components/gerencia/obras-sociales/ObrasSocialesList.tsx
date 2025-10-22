@@ -118,12 +118,15 @@ export function ObrasSocialesListComponent({ filters, refreshTrigger }: ObrasSoc
         </thead>
         <tbody className="divide-y divide-gray-100">
           {obrasSociales.map((os: ObraSocial, index: number) => (
-            <tr 
-              key={os.obra_social_id} 
+            <tr
+              key={os.obra_social_id}
               className="hover:bg-green-50/30 transition-colors duration-150 group"
-              style={{ 
+              style={{
                 animationDelay: `${index * 50}ms`,
-                animation: 'fadeInRow 0.3s ease-out forwards',
+                animationName: 'fadeInRow',
+                animationDuration: '0.3s',
+                animationTimingFunction: 'ease-out',
+                animationFillMode: 'forwards',
                 opacity: 0
               }}
             >
