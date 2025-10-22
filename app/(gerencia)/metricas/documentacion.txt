@@ -1,4 +1,5 @@
 si hace falta, para los gráficos instalar:
 npm install recharts 
+npm install react-markdown
 # o 
 yarn add recharts
