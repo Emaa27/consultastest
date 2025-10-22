@@ -36,7 +36,8 @@ export function useTurnos() {
     try {
       const res = await fetch("/api/pacientes");
       const data = await res.json();
-      setPacientes(data);
+      const activosPacientes = data.filter((p: Paciente) => p.estado === "activo");
+      setPacientes(activosPacientes);
     } catch (error) {
       console.error("Error cargando pacientes", error);
     }
@@ -46,7 +47,8 @@ export function useTurnos() {
     try {
       const res = await fetch("/api/profesionales");
       const data = await res.json();
-      setProfesionales(data);
+      const activosProfesionales = data.filter((p: Profesional) => p.estado === "activo");
+      setProfesionales(activosProfesionales);
     } catch (error) {
       console.error("Error cargando profesionales", error);
     }

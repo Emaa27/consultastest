@@ -20,14 +20,20 @@ export async function GET(req: Request) {
 
     const turnos = await prisma.turnos.findMany({
       where,
-      include: !fecha && !profesional_id
-        ? {
-            pacientes: true,
-            profesionales: { include: { usuarios: true, profesiones: true } },
-          }
-        : undefined, // para la búsqueda de ocupados no hace falta incluir relaciones
+      include: {
+        pacientes: {
+          include: { obras_sociales: true }, 
+        },
+        profesionales: {
+          include: {
+            usuarios: true,
+            profesiones: true,
+          },
+        },
+      },
       orderBy: { inicio: "asc" },
     });
+
 
     // Normalizar fin cuando sea null (por compatibilidad)
     const conFin = turnos.map((t) => {
@@ -61,9 +67,9 @@ export async function POST(req: Request) {
     console.log("[POST /turnos] body RAW:", body);
 
     const profesional_id = Number(body.profesional_id);
-    const paciente_id    = Number(body.paciente_id);
-    const duracion_min   = Number(body.duracion_min ?? 30);
-    const estado         = body.estado ?? "reservado";
+    const paciente_id = Number(body.paciente_id);
+    const duracion_min = Number(body.duracion_min ?? 30);
+    const estado = body.estado ?? "reservado";
     // const consultorio_id = body.consultorio_id != null ? Number(body.consultorio_id) : undefined; // <- QUITADO
 
     if (!profesional_id || !paciente_id) {
@@ -71,7 +77,7 @@ export async function POST(req: Request) {
     }
 
     let inicioStr: string | undefined = body.inicio;
-    let finStr: string | undefined    = body.fin;
+    let finStr: string | undefined = body.fin;
 
     if (!inicioStr) {
       if (!body.fecha || !body.hora) {
@@ -97,12 +103,10 @@ export async function POST(req: Request) {
     const data = {
       profesional_id,
       paciente_id,
-      inicio,         // DATETIME local exacto
+      inicio,       
       fin,
       duracion_min,
       estado,
-      // obra_social_id: body.obra_social_id ?? null,  // <-- sólo si existe en tu schema
-      // turno_id: body.turno_id,                      // <-- sólo si existe en tu schema
     };
 
     console.log("[POST /turnos] data a insertar:", {

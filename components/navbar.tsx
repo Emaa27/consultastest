@@ -112,7 +112,7 @@ const Navbar: React.FC = () => {
     { id: 'turnos', label: 'Calendario', icon: Calendar, href: '/turnos' },
     { id: 'pacientes', label: 'Pacientes', icon: UserPlus, href: '/pacientes' },
     { id: 'profesionales', label: 'Profesionales', icon: UserCheck, href: '/profesionales' },
-    { id: 'dashboard', label: 'Dashboard', icon: BarChart3, href: '/dashboard' },
+    { id: 'dashboard', label: 'Dashboard', icon: BarChart3, href: '/dashboardRecep' },
   ];
 
   const isActive = (href: string) =>

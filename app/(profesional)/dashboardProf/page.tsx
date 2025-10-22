@@ -168,22 +168,22 @@ export default function ProfesionalDashboardPage() {
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#A855F7", "#EC4899"];
 
   return (
-    <div className="p-4 sm:p-8 space-y-8 bg-gray-50 min-h-screen lg:pl-28 pt-20 lg:pt-8">
+    <div className="p-4 sm:p-8 space-y-8 bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen lg:pl-28 pt-20 lg:pt-8">
       {/* --- Encabezado --- */}
-      <header className="p-6 bg-gradient-to-r from-green-600 to-green-400 text-white rounded-xl shadow-xl">
+      <header className="p-6 bg-gradient-to-r from-blue-600 to-blue-400 text-white rounded-xl shadow-xl">
         <h1 className="text-3xl font-extrabold">¡Hola, {nombreUsuario}!</h1>
-        <p className="mt-1 text-green-100">Resumen de rendimiento y actividad reciente.</p>
+        <p className="mt-1 text-blue-100">Resumen de rendimiento y actividad reciente.</p>
 
         <div className="mt-4 flex flex-wrap gap-3 items-end">
           <div>
-            <label className="block text-sm font-medium text-green-100 mb-1">Desde</label>
-            <input type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} className="px-3 py-2 border border-green-300 rounded-lg text-gray-900" />
+            <label className="block text-sm font-medium text-blue-100 mb-1">Desde</label>
+            <input type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} className="px-3 py-2 border border-blue-300 rounded-lg text-gray-900" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-green-100 mb-1">Hasta</label>
-            <input type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} className="px-3 py-2 border border-green-300 rounded-lg text-gray-900" />
+            <label className="block text-sm font-medium text-blue-100 mb-1">Hasta</label>
+            <input type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} className="px-3 py-2 border border-blue-300 rounded-lg text-gray-900" />
           </div>
-          <button onClick={fetchKpis} className="px-4 py-2 bg-white text-green-700 font-medium rounded-lg hover:bg-green-50">Aplicar</button>
+          <button onClick={fetchKpis} className="px-4 py-2 bg-white text-blue-700 font-medium rounded-lg hover:bg-blue-50">Aplicar</button>
         </div>
       </header>
 
@@ -192,7 +192,7 @@ export default function ProfesionalDashboardPage() {
         <KpiCard title="Promedio Diario de Turnos" value={kpis.promedioDiarioTurnos || 0} icon={Calendar} colorClass="text-indigo-600" loading={loadingKpis} />
         <KpiCard title="Pacientes únicos" value={kpis.pacientesUnicos || 0} icon={UserCheck} colorClass="text-sky-600" loading={loadingKpis} />
         <KpiCard title="Promedio de Espera" value={kpis.tiempoPromedioEspera || "00:00:00"} icon={Clock} colorClass="text-amber-600" loading={loadingKpis} />
-        <KpiCard title="Promedio de Atención" value={kpis.tiempoPromedioConsulta || "00:00:00"} icon={Clock} colorClass="text-green-600" loading={loadingKpis} />
+        <KpiCard title="Promedio de Atención" value={kpis.tiempoPromedioConsulta || "00:00:00"} icon={Clock} colorClass="text-blue-600" loading={loadingKpis} />
       </div>
 
       {/* --- Gráficos --- */}
