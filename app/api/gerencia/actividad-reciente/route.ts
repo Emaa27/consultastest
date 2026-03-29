@@ -13,7 +13,8 @@ export async function GET(req: Request) {
     const finHoy = new Date();
     finHoy.setHours(23, 59, 59, 999);
 
-    const turnosRecientes = await prisma.turnos.findMany({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const turnosRecientes: any[] = await prisma.turnos.findMany({
       where: {
         inicio: {
           gte: hoy,
@@ -56,7 +57,7 @@ export async function GET(req: Request) {
     }> = [];
 
     // Agregar turnos
-    turnosRecientes.forEach((turno) => {
+    turnosRecientes.forEach((turno: typeof turnosRecientes[number]) => {
       const hora = new Date(turno.inicio).toLocaleTimeString("es-AR", {
         hour: "2-digit",
         minute: "2-digit",
@@ -102,7 +103,7 @@ export async function GET(req: Request) {
     });
 
     // Agregar pacientes nuevos
-    pacientesNuevos.forEach((paciente) => {
+    pacientesNuevos.forEach((paciente: typeof pacientesNuevos[number]) => {
       const hora = paciente.fecha_registro
         ? new Date(paciente.fecha_registro).toLocaleTimeString("es-AR", {
             hour: "2-digit",

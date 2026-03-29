@@ -117,7 +117,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
             });
 
             // 3. Crear medicamentos si existen
-            let medicamentosCreados = [];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let medicamentosCreados: any[] = [];
             if (body.medicamentos && body.medicamentos.length > 0) {
                 medicamentosCreados = await Promise.all(
                     body.medicamentos.map((med: Medicamento) =>

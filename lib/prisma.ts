@@ -1,9 +1,13 @@
-import { PrismaClient } from '@prisma/client/edge'
+import { PrismaClient } from '@prisma/client'
 import { withAccelerate } from '@prisma/extension-accelerate'
 
-const globalForPrisma = global as unknown as { prisma: ReturnType<typeof make> }
+declare global {
+  // eslint-disable-next-line no-var
+  var prisma: PrismaClient | undefined
+}
 
-const make = () => new PrismaClient().$extends(withAccelerate())
+export const prisma: PrismaClient =
+  (global.prisma as PrismaClient) ??
+  (new PrismaClient().$extends(withAccelerate()) as unknown as PrismaClient)
 
-export const prisma = globalForPrisma.prisma ?? make()
-globalForPrisma.prisma = prisma
+global.prisma = prisma

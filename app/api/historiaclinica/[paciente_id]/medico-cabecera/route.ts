@@ -53,7 +53,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         }
 
         // Verificar que el nuevo médico es clínico y está activo
-        const nuevoMedico = await prisma.profesionales.findFirst({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const nuevoMedico: any = await prisma.profesionales.findFirst({
             where: {
                 profesional_id: nuevo_medico_id,
                 estado: 'activo',

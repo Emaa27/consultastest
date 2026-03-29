@@ -27,7 +27,8 @@ export async function GET(req: Request) {
     }
 
     // Obtener conteo de turnos por estado
-    const turnos = await prisma.turnos.groupBy({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const turnos: any[] = await (prisma.turnos as any).groupBy({
       by: ["estado"],
       where: {
         inicio: {

@@ -13,7 +13,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Traemos el usuario + su rol y, si aplica, su profesional con la profesión
-    const usuario = await prisma.usuarios.findFirst({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const usuario: any = await prisma.usuarios.findFirst({
       where: { email, estado: 'activo' },
       include: {
         roles: true,
