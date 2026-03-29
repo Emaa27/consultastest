@@ -1,26 +1,9 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '@prisma/client/edge'
+import { withAccelerate } from '@prisma/extension-accelerate'
 
-const globalForPrisma = global as unknown as { prisma: PrismaClient | undefined }
+const globalForPrisma = global as unknown as { prisma: ReturnType<typeof make> }
 
-function createClient() {
-  return new PrismaClient()
-}
+const make = () => new PrismaClient().$extends(withAccelerate())
 
-if (!globalForPrisma.prisma) {
-  globalForPrisma.prisma = createClient()
-}
-
-export const resetPrisma = () => {
-  try { globalForPrisma.prisma?.$disconnect() } catch {}
-  globalForPrisma.prisma = createClient()
-}
-
-export const prisma = new Proxy({} as PrismaClient, {
-  get(_target, prop) {
-    if (!globalForPrisma.prisma) {
-      globalForPrisma.prisma = createClient()
-    }
-    const value = (globalForPrisma.prisma as any)[prop]
-    return typeof value === 'function' ? value.bind(globalForPrisma.prisma) : value
-  }
-})
+export const prisma = globalForPrisma.prisma ?? make()
+globalForPrisma.prisma = prisma
