@@ -118,13 +118,11 @@ const Navbar: React.FC = () => {
   const isActive = (href: string) =>
     href === '/' ? pathname === '/' : pathname?.startsWith(href);
 
-  const handleLogout = () => {
-    try {
-      localStorage.clear();
-    } finally {
-      setIsMobileMenuOpen(false);
-      router.push('/login');
-    }
+  const handleLogout = async () => {
+    localStorage.clear();
+    await fetch('/api/auth/logout', { method: 'POST' });
+    setIsMobileMenuOpen(false);
+    router.push('/login');
   };
 
   // Obtener iniciales del nombre
