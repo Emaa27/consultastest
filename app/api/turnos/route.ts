@@ -9,7 +9,10 @@ export async function GET(req: Request) {
     const fecha = searchParams.get("fecha"); // YYYY-MM-DD
 
     // Filtro dinámico
-    const where: any = {};
+    const where: {
+      profesional_id?: number;
+      inicio?: { gte: Date; lte: Date };
+    } = {};
     if (profesional_id) where.profesional_id = Number(profesional_id);
 
     if (fecha) {
@@ -124,8 +127,9 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json(nuevoTurno, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error creando turno (detalle):", error);
-    return NextResponse.json({ error: error?.message ?? "Error al crear el turno" }, { status: 500 });
+    const msg = error instanceof Error ? error.message : "Error al crear el turno";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
