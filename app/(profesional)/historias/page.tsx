@@ -86,7 +86,7 @@ export default function HistoriasPage() {
       try {
         const res = await fetch('/api/historias');
         const data = await res.json();
-        setHistorias(data);
+        setHistorias(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error(error);
       } finally {

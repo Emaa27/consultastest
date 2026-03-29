@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 /* Obtener todas las especialidades */
 export async function GET() {
@@ -26,12 +24,7 @@ export async function POST(req: Request) {
     }
 
     const nueva = await prisma.profesiones.create({
-      data: {
-        nombre,
-        descripcion: descripcion || null,
-        fecha_registro: new Date(),
-        active: 'activo',
-      },
+      data: { nombre },
     });
 
     return NextResponse.json(nueva);
@@ -55,7 +48,7 @@ export async function PUT(req: Request) {
 
     const updated = await prisma.profesiones.update({
       where: { profesion_id: Number(id) },
-      data: { active },
+      data: {},
     });
 
     return NextResponse.json(updated);
