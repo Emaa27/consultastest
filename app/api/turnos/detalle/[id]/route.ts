@@ -1,6 +1,7 @@
 // app/api/turnos/detalle/[id]/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { turnos_estado } from "@prisma/client";
 
 export async function GET(
   req: Request,
@@ -57,16 +58,13 @@ export async function PATCH(
       );
     }
 
-    let data = {
-      estado: estado,
+    const data: { estado: turnos_estado; fecha_confirmacion?: Date } = {
+      estado: estado as turnos_estado,
     };
     // Si el nuevo estado del turno es "confirmado" -->
     if (estado == "confirmado"){
       // Actualizar también la fecha de confirmación
-      data = {
-        estado: estado,
-        fecha_confirmacion: new Date(),
-      }
+      data.fecha_confirmacion = new Date();
     }
 
     // Actualizar el turno

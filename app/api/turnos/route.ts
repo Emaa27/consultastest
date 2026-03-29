@@ -80,7 +80,7 @@ export async function POST(req: Request) {
     }
 
     let inicioStr: string | undefined = body.inicio;
-    let finStr: string | undefined = body.fin;
+    const finStr: string | undefined = body.fin;
 
     if (!inicioStr) {
       if (!body.fecha || !body.hora) {

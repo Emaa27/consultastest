@@ -45,7 +45,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Turno no encontrado' }, { status: 404 });
     }
 
-    let data: any = {
+    const data: any = {
       estado: estado,
     };
 

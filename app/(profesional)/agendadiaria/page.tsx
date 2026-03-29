@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 // ── Iconos (igual que los tuyos) ───────────────────────────────────────────────
@@ -175,7 +175,7 @@ const bloquesHorarios = [
 ];
 
 // ── Componente ────────────────────────────────────────────────────────────────
-export default function AgendaDiariaPage() {
+function AgendaDiariaContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -902,5 +902,13 @@ export default function AgendaDiariaPage() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function AgendaDiariaPage() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <AgendaDiariaContent />
+    </Suspense>
   );
 }

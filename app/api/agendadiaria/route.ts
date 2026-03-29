@@ -18,7 +18,7 @@ export async function GET(req: Request) {
     }
 
     // Filtro base (por profesional)
-    let where: any = { profesional_id: Number(profesionalId) };
+    const where: any = { profesional_id: Number(profesionalId) };
 
     // Si se pasa fecha, se construye el rango de ese día [00:00 → 23:59]
     if (fecha) {
